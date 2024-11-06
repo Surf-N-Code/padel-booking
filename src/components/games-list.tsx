@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { format } from "date-fns"
 import { Button } from "./ui/button"
 import { UserPlus, UserMinus } from "lucide-react"
-import type { Game } from "@/types/game"
+import type { Game, Player } from "@/types/game"
 import { useState } from "react"
 
 export function GamesList() {
@@ -50,11 +50,38 @@ export function GamesList() {
     },
   })
 
+  const leaveGame = useMutation({
+    mutationFn: async ({ gameId, player }: { gameId: string; player: Player }) => {
+      const response = await fetch(`/api/games/${gameId}/leave`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ player }),
+      })
+      if (!response.ok) {
+        throw new Error('Failed to leave game')
+      }
+      return response.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['games'] })
+    },
+  })
+
   const handleSavePlayers = async (gameId: string) => {
     try {
       await joinGame.mutate(gameId)
     } catch (error) {
       console.error('Failed to join game:', error)
+    }
+  }
+
+  const handleRemovePlayer = async (gameId: string, player: Player) => {
+    try {
+      await leaveGame.mutate({ gameId, player })
+    } catch (error) {
+      console.error('Failed to remove player:', error)
     }
   }
 
@@ -91,6 +118,8 @@ export function GamesList() {
                         variant="ghost" 
                         size="sm"
                         className="h-8 w-8 p-0"
+                        onClick={() => handleRemovePlayer(game.id, player)}
+                        disabled={leaveGame.isPending}
                       >
                         <UserMinus className="h-4 w-4" />
                       </Button>
