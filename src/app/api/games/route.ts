@@ -11,6 +11,7 @@ export async function POST(request: Request) {
     const game: Partial<Game> = {
       id,
       dateTime: data.dateTime,
+      level: data.level,
       location: data.location || "Main Court",
       createdAt: new Date().toISOString(),
       createdBy: data.createdBy || "anonymous", // Replace when auth is added

@@ -9,11 +9,20 @@ import type { Game, Player } from "@/types/game"
 import { useState } from "react"
 import { Switch } from "./ui/switch"
 import { Label } from "./ui/label"
+import { Badge } from "./ui/badge"
 
 type LoadingState = {
   gameId: string;
   type: 'join' | 'leave';
   playerId?: string;
+}
+
+const LEVEL_BADGES: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
+  beginner: { label: "Beginner (0-2.0)", variant: "outline" },
+  intermediate: { label: "Intermediate (2.5-3.5)", variant: "secondary" },
+  advanced: { label: "Advanced (4.0-4.5)", variant: "default" },
+  expert: { label: "Expert (5.0+)", variant: "default" },
+  mixed: { label: "Mixed Levels", variant: "secondary" },
 }
 
 export function GamesList() {
@@ -111,7 +120,7 @@ export function GamesList() {
     }
   }
 
-  const isButtonLoading = (gameId: string, playerId?: string, type: 'join' | 'leave') => {
+  const isButtonLoading = (gameId: string, type: 'join' | 'leave', playerId?: string) => {
     return loadingState?.gameId === gameId && 
            loadingState.type === type && 
            (type === 'join' || loadingState.playerId === playerId)
@@ -138,12 +147,17 @@ export function GamesList() {
         {filteredGames?.map((game) => (
           <Card key={game.id}>
             <CardHeader>
-              <CardTitle className="flex justify-between items-center">
-                <span>{format(new Date(game.dateTime), "PPP")}</span>
-                <span className="text-sm font-normal">
-                  {format(new Date(game.dateTime), "HH:mm")}
-                </span>
-              </CardTitle>
+              <div className="flex justify-between items-start">
+                <div className="space-y-2">
+                  <CardTitle className="flex items-center gap-2">
+                    <span>{format(new Date(game.dateTime), "EEEE, dd.MM.yyyy HH:mm")}</span>
+                    
+                  </CardTitle>
+                  <Badge variant={"default"}>
+                      {LEVEL_BADGES[game.level]?.label || game.level}
+                    </Badge>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -159,11 +173,10 @@ export function GamesList() {
                       >
                         <span>{player.name}</span>
                         <Button 
-                          variant="ghost" 
+                          variant="outline" 
                           size="sm"
-                          className="h-8 w-8 p-0"
                           onClick={() => handleRemovePlayer(game.id, player)}
-                          disabled={isButtonLoading(game.id, player.id, 'leave')}
+                          disabled={isButtonLoading(game.id, 'leave', player.id)}
                         >
                           <UserMinus className="h-4 w-4" />
                         </Button>
@@ -186,7 +199,7 @@ export function GamesList() {
                             variant="outline" 
                             size="sm"
                             onClick={() => handleSavePlayers(game.id)}
-                            disabled={isButtonLoading(game.id, undefined, 'join')}
+                            disabled={isButtonLoading(game.id, 'join')}
                           >
                             <UserPlus className="h-4 w-4" />
                           </Button>
