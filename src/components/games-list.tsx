@@ -8,10 +8,16 @@ import { UserPlus, UserMinus } from "lucide-react"
 import type { Game, Player } from "@/types/game"
 import { useState } from "react"
 
+type LoadingState = {
+  gameId: string;
+  playerId?: string;
+  type: 'join' | 'leave';
+}
+
 export function GamesList() {
   const queryClient = useQueryClient()
-  // Track player names per game
   const [playerNames, setPlayerNames] = useState<Record<string, string>>({})
+  const [loadingState, setLoadingState] = useState<LoadingState | null>(null)
 
   const { data: games, isLoading, error } = useQuery<Game[]>({
     queryKey: ["games"],
@@ -27,6 +33,7 @@ export function GamesList() {
 
   const joinGame = useMutation({
     mutationFn: async (gameId: string) => {
+      setLoadingState({ gameId, type: 'join' })
       const response = await fetch(`/api/games/${gameId}/join`, {
         method: 'POST',
         headers: {
@@ -47,16 +54,19 @@ export function GamesList() {
     },
     onSuccess: (_, gameId) => {
       queryClient.invalidateQueries({ queryKey: ['games'] })
-      // Clear only the specific game's input
       setPlayerNames(prev => ({
         ...prev,
         [gameId]: ''
       }))
     },
+    onSettled: () => {
+      setLoadingState(null)
+    }
   })
 
   const leaveGame = useMutation({
     mutationFn: async ({ gameId, player }: { gameId: string; player: Player }) => {
+      setLoadingState({ gameId, playerId: player.id, type: 'leave' })
       const response = await fetch(`/api/games/${gameId}/leave`, {
         method: 'POST',
         headers: {
@@ -72,6 +82,9 @@ export function GamesList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['games'] })
     },
+    onSettled: () => {
+      setLoadingState(null)
+    }
   })
 
   const handleSavePlayers = async (gameId: string) => {
@@ -88,6 +101,12 @@ export function GamesList() {
     } catch (error) {
       console.error('Failed to remove player:', error)
     }
+  }
+
+  const isButtonLoading = (gameId: string, playerId?: string, type: 'join' | 'leave') => {
+    return loadingState?.gameId === gameId && 
+           loadingState.type === type && 
+           (type === 'join' || loadingState.playerId === playerId)
   }
 
   if (isLoading) return <div>Loading games...</div>
@@ -124,7 +143,7 @@ export function GamesList() {
                         size="sm"
                         className="h-8 w-8 p-0"
                         onClick={() => handleRemovePlayer(game.id, player)}
-                        disabled={leaveGame.isPending}
+                        disabled={isButtonLoading(game.id, player.id, 'leave')}
                       >
                         <UserMinus className="h-4 w-4" />
                       </Button>
@@ -147,7 +166,7 @@ export function GamesList() {
                           variant="outline" 
                           size="sm"
                           onClick={() => handleSavePlayers(game.id)}
-                          disabled={joinGame.isPending}
+                          disabled={isButtonLoading(game.id, undefined, 'join')}
                         >
                           <UserPlus className="h-4 w-4" />
                         </Button>
