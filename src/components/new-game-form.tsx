@@ -15,14 +15,30 @@ import {
 import { Input } from "@/components/ui/input"
 import { useRouter } from "next/navigation"
 import { useMutation } from "@tanstack/react-query"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 const formSchema = z.object({
   date: z.date(),
   startTime: z.string().min(1),
   endTime: z.string().min(1),
   location: z.string().min(1),
+  level: z.string().min(1),
   players: z.array(z.string().optional()).length(4),
 })
+
+const GAME_LEVELS = [
+  { value: "beginner", label: "Beginner (1.0-2.0)" },
+  { value: "intermediate", label: "Intermediate (2.5-3.5)" },
+  { value: "advanced", label: "Advanced (4.0-4.5)" },
+  { value: "expert", label: "Expert (5.0+)" },
+  { value: "mixed", label: "Mixed Levels" },
+] as const
 
 export function NewGameForm() {
   const router = useRouter()
@@ -31,7 +47,8 @@ export function NewGameForm() {
       date: new Date(),
       startTime: "",
       endTime: "",
-      location: "Main Court",
+      location: "Hall 1",
+      level: "mixed",
       players: ["", "", "", ""]
     },
     resolver: zodResolver(formSchema)
@@ -47,12 +64,14 @@ export function NewGameForm() {
         method: "POST",
         body: JSON.stringify({
           dateTime: dateTime.toISOString(),
+          location: values.location,
+          level: values.level,
           players: values.players
             .filter(Boolean)
             .map(name => ({
               id: crypto.randomUUID(),
               name,
-              userId: "temp-user-id" // Replace with actual user ID when auth is added
+              userId: "temp-user-id"
             }))
         })
       })
@@ -92,20 +111,47 @@ export function NewGameForm() {
           )}
         />
         
-        <FormField
-          control={form.control}
-          name="location"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Location</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
+        <div className="flex gap-4">
+          <FormField
+            control={form.control}
+            name="location"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>Location</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="level"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>Game Level</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select level" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {GAME_LEVELS.map((level) => (
+                      <SelectItem key={level.value} value={level.value}>
+                        {level.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <div className="flex gap-4">
           <FormField
             control={form.control}
