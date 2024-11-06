@@ -6,6 +6,7 @@ import { format } from "date-fns"
 import { Button } from "./ui/button"
 import { UserPlus, UserMinus } from "lucide-react"
 import type { Game } from "@/types/game"
+import { Input } from "./ui/input"
 
 export function GamesList() {
   const { data: games, isLoading, error } = useQuery<Game[]>({
@@ -46,17 +47,21 @@ export function GamesList() {
                 </h3>
                 <ul className="space-y-1">
                   {game.players?.map((player) => (
-                    <li 
-                      key={player.id}
-                      className="flex items-center justify-between"
-                    >
+                    <li key={player.id} className="flex items-center justify-between">
                       <span>{player.name}</span>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                      >
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                         <UserMinus className="h-4 w-4" />
+                      </Button>
+                    </li>
+                  ))}
+                  {Array.from({ length: 4 - (game.players?.length || 0) }).map((_, index) => (
+                    <li key={`empty-${index}`} className="flex gap-2">
+                      <Input 
+                        placeholder={`Player ${(game.players?.length || 0) + index + 1}`}
+                        className="flex-1"
+                      />
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <UserPlus className="h-4 w-4" />
                       </Button>
                     </li>
                   ))}
@@ -66,9 +71,9 @@ export function GamesList() {
                         variant="outline" 
                         className="w-full"
                         size="sm"
+                        onClick={() => handleSavePlayers(game.id)}
                       >
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        Join Game
+                        Save Players
                       </Button>
                     </li>
                   )}
