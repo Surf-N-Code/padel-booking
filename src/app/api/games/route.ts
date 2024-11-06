@@ -1,7 +1,7 @@
 import { redis } from "@/lib/redis"
 import { NextResponse } from "next/server"
 import { addDays } from "date-fns"
-import { Game } from "@/types/game"
+import type { Game } from "@/types/game"
 
 export async function POST(request: Request) {
   try {
@@ -20,7 +20,10 @@ export async function POST(request: Request) {
     await redis.hset(`game:${id}`, game)
 
     // Add to sorted set for date-based queries
-    await redis.zadd('games', Date.parse(game.dateTime), game.id)
+    await redis.zadd('games:by:date', 
+      Date.parse(game.dateTime!), 
+      game.id!
+    )
 
     // Add initial players if any
     if (data.players?.length) {
@@ -49,19 +52,26 @@ export async function GET() {
       addDays(new Date(), 14).getTime()
     )
 
+    console.log('Found game IDs:', gameIds)
+
     // Get game details for each ID
     const games = await Promise.all(
       gameIds.map(async (id) => {
-        const game = await redis.hgetall(`game:${id}`)
+        const gameData = await redis.hgetall(`game:${id}`)
+        console.log(`Game data for ${id}:`, gameData)
+        
         const players = await redis.smembers(`game:${id}:players`)
+        console.log(`Players for ${id}:`, players)
+        
         return {
-          ...game,
+          ...gameData,
           id,
           players: players.map(player => JSON.parse(player))
         }
       })
     )
 
+    console.log('Final games data:', games)
     return NextResponse.json(games)
   } catch (error) {
     console.error('Failed to fetch games:', error)

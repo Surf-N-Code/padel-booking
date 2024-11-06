@@ -18,10 +18,10 @@ import { useMutation } from "@tanstack/react-query"
 
 const formSchema = z.object({
   date: z.date(),
-  startTime: z.string(),
-  endTime: z.string(),
-  location: z.string(),
-  players: z.array(z.string()).min(1).max(4),
+  startTime: z.string().min(1),
+  endTime: z.string().min(1),
+  location: z.string().min(1),
+  players: z.array(z.string().optional()).length(4),
 })
 
 export function NewGameForm() {
@@ -29,8 +29,10 @@ export function NewGameForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     defaultValues: {
       date: new Date(),
+      startTime: "",
+      endTime: "",
       location: "Main Court",
-      players: []
+      players: ["", "", "", ""]
     },
     resolver: zodResolver(formSchema)
   })
@@ -77,11 +79,15 @@ export function NewGameForm() {
               <FormLabel>Date & Time</FormLabel>
               <FormControl>
                 <Input 
-                  type="datetime-local" 
-                  {...field}
-                  value={field.value ? field.value.toISOString().slice(0, 16) : ''}
+                  type="date" 
+                  value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : ''}
+                  onChange={(e) => {
+                    const date = new Date(e.target.value);
+                    field.onChange(date);
+                  }}
                 />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -93,8 +99,9 @@ export function NewGameForm() {
             <FormItem>
               <FormLabel>Location</FormLabel>
               <FormControl>
-                <Input {...field} value={field.value || ''} />
+                <Input {...field} />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -107,7 +114,11 @@ export function NewGameForm() {
               <FormItem>
                 <FormLabel>Start Time</FormLabel>
                 <FormControl>
-                  <Input type="time" {...field} />
+                  <Input 
+                    type="time" 
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -121,7 +132,11 @@ export function NewGameForm() {
               <FormItem>
                 <FormLabel>End Time</FormLabel>
                 <FormControl>
-                  <Input type="time" {...field} />
+                  <Input 
+                    type="time" 
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -141,7 +156,8 @@ export function NewGameForm() {
                   <FormControl>
                     <Input 
                       placeholder={`Player ${index + 1}`} 
-                      {...field} 
+                      value={field.value ?? ''}
+                      onChange={field.onChange}
                     />
                   </FormControl>
                   <FormMessage />
@@ -157,4 +173,4 @@ export function NewGameForm() {
       </form>
     </Form>
   )
-} 
+}

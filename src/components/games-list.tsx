@@ -5,41 +5,75 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { format } from "date-fns"
 import { Button } from "./ui/button"
 import { UserPlus, UserMinus } from "lucide-react"
+import type { Game } from "@/types/game"
 
 export function GamesList() {
-  const { data: games } = useQuery({
+  const { data: games, isLoading, error } = useQuery<Game[]>({
     queryKey: ["games"],
     queryFn: async () => {
       const res = await fetch("/api/games")
-      return res.json()
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Failed to fetch games')
+      }
+      const data = await res.json()
+      console.log('Fetched games:', data) // Debug log
+      return data
     },
   })
 
+  if (isLoading) return <div>Loading games...</div>
+  if (error) return <div>Error loading games: {error.message}</div>
+  if (!games?.length) return <div>No games scheduled yet.</div>
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {games?.map((game: any) => (
+      {games.map((game) => (
         <Card key={game.id}>
           <CardHeader>
-            <CardTitle>
-              {format(new Date(game.dateTime), "PPP p")}
+            <CardTitle className="flex justify-between items-center">
+              <span>{format(new Date(game.dateTime), "PPP")}</span>
+              <span className="text-sm font-normal">
+                {format(new Date(game.dateTime), "HH:mm")}
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
+            <div className="space-y-4">
               <div>
-                <h3 className="font-semibold">Players ({game.players.length}/4):</h3>
-                <ul className="list-disc list-inside">
-                  {game.players.map((player: any) => (
-                    <li key={player.id}>{player.name}</li>
+                <h3 className="font-semibold mb-2">
+                  Players ({game.players?.length || 0}/4):
+                </h3>
+                <ul className="space-y-1">
+                  {game.players?.map((player) => (
+                    <li 
+                      key={player.id}
+                      className="flex items-center justify-between"
+                    >
+                      <span>{player.name}</span>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                      >
+                        <UserMinus className="h-4 w-4" />
+                      </Button>
+                    </li>
                   ))}
+                  {(!game.players || game.players.length < 4) && (
+                    <li className="mt-2">
+                      <Button 
+                        variant="outline" 
+                        className="w-full"
+                        size="sm"
+                      >
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Join Game
+                      </Button>
+                    </li>
+                  )}
                 </ul>
               </div>
-              {game.players.length < 4 && (
-                <Button className="w-full">
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Join Game
-                </Button>
-              )}
             </div>
           </CardContent>
         </Card>
