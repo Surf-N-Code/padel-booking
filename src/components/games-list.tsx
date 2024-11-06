@@ -10,7 +10,8 @@ import { useState } from "react"
 
 export function GamesList() {
   const queryClient = useQueryClient()
-  const [playerName, setPlayerName] = useState("")
+  // Track player names per game
+  const [playerNames, setPlayerNames] = useState<Record<string, string>>({})
 
   const { data: games, isLoading, error } = useQuery<Game[]>({
     queryKey: ["games"],
@@ -34,8 +35,8 @@ export function GamesList() {
         body: JSON.stringify({
           player: {
             id: crypto.randomUUID(),
-            name: playerName || 'Anonymous Player',
-            userId: 'temp-user-id' // Replace with actual user ID when auth is added
+            name: playerNames[gameId] || 'Anonymous Player',
+            userId: 'temp-user-id'
           }
         }),
       })
@@ -44,9 +45,13 @@ export function GamesList() {
       }
       return response.json()
     },
-    onSuccess: () => {
+    onSuccess: (_, gameId) => {
       queryClient.invalidateQueries({ queryKey: ['games'] })
-      setPlayerName("")
+      // Clear only the specific game's input
+      setPlayerNames(prev => ({
+        ...prev,
+        [gameId]: ''
+      }))
     },
   })
 
@@ -132,8 +137,11 @@ export function GamesList() {
                           type="text"
                           placeholder="Your name"
                           className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                          value={playerName}
-                          onChange={(e) => setPlayerName(e.target.value)}
+                          value={playerNames[game.id] || ''}
+                          onChange={(e) => setPlayerNames(prev => ({
+                            ...prev,
+                            [game.id]: e.target.value
+                          }))}
                         />
                         <Button 
                           variant="outline" 
