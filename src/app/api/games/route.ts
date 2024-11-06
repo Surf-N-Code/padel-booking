@@ -45,10 +45,11 @@ export async function POST(request: Request) {
 
 export async function GET() {
   try {
-    // Get all game IDs from the sorted set for next 2 weeks
+    // Get all game IDs from the sorted set for future games only
+    const now = new Date().getTime()
     const gameIds = await redis.zrangebyscore(
       "games:by:date",
-      new Date().getTime(),
+      now, // Start from current timestamp
       addDays(new Date(), 14).getTime()
     )
 
@@ -71,8 +72,13 @@ export async function GET() {
       })
     )
 
-    console.log('Final games data:', games)
-    return NextResponse.json(games)
+    // Additional client-side safety filter
+    const futureGames = games.filter(game => 
+      new Date(game.dateTime).getTime() > now
+    )
+
+    console.log('Final games data:', futureGames)
+    return NextResponse.json(futureGames)
   } catch (error) {
     console.error('Failed to fetch games:', error)
     return NextResponse.json(
