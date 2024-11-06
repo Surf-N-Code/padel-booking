@@ -22,23 +22,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { VENUES, GAME_LEVELS } from "@/types/game"
 
 const formSchema = z.object({
   date: z.date(),
   startTime: z.string().min(1),
   endTime: z.string().min(1),
-  location: z.string().min(1),
+  venue: z.string().min(1),
   level: z.string().min(1),
   players: z.array(z.string().optional()).length(4),
 })
-
-const GAME_LEVELS = [
-  { value: "beginner", label: "Beginner (0-2.0)" },
-  { value: "intermediate", label: "Intermediate (2.5-3.5)" },
-  { value: "advanced", label: "Advanced (4.0-4.5)" },
-  { value: "expert", label: "Expert (5.0+)" },
-  { value: "mixed", label: "Mixed Levels" },
-] as const
 
 export function NewGameForm() {
   const router = useRouter()
@@ -47,7 +40,7 @@ export function NewGameForm() {
       date: new Date(),
       startTime: "",
       endTime: "",
-      location: "Hall 1",
+      venue: VENUES[0].value,
       level: "mixed",
       players: ["", "", "", ""]
     },
@@ -64,7 +57,7 @@ export function NewGameForm() {
         method: "POST",
         body: JSON.stringify({
           dateTime: dateTime.toISOString(),
-          location: values.location,
+          venue: values.venue,
           level: values.level,
           players: values.players
             .filter(Boolean)
@@ -114,13 +107,24 @@ export function NewGameForm() {
         <div className="flex gap-4">
           <FormField
             control={form.control}
-            name="location"
+            name="venue"
             render={({ field }) => (
               <FormItem className="flex-1">
-                <FormLabel>Location</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
+                <FormLabel>Venue</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select venue" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {VENUES.map((venue) => (
+                      <SelectItem key={venue.value} value={venue.value}>
+                        {venue.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
