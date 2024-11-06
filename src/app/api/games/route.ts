@@ -49,36 +49,39 @@ export async function GET() {
     const now = new Date().getTime()
     const gameIds = await redis.zrangebyscore(
       "games:by:date",
-      now, // Start from current timestamp
+      now,
       addDays(new Date(), 14).getTime()
     )
 
     console.log('Found game IDs:', gameIds)
 
-    // Get game details for each ID
+    // Get game details and scores for each ID
     const games = await Promise.all(
       gameIds.map(async (id) => {
-        const gameData = await redis.hgetall(`game:${id}`)
-        console.log(`Game data for ${id}:`, gameData)
-        
+        const [gameData, dateTimeScore] = await Promise.all([
+          redis.hgetall(`game:${id}`) as Partial<Game>,
+          redis.zscore("games:by:date", id)
+        ])
         const players = await redis.smembers(`game:${id}:players`)
-        console.log(`Players for ${id}:`, players)
+        
+        if (!dateTimeScore) throw new Error(`No date found for game ${id}`)
         
         return {
           ...gameData,
           id,
+          dateTime: new Date(parseInt(dateTimeScore)).toISOString(),
           players: players.map(player => JSON.parse(player))
-        }
+        } as Game
       })
     )
 
-    // Additional client-side safety filter
-    const futureGames = games.filter(game => 
-      new Date(game.dateTime).getTime() > now
-    )
+    // Sort games by date
+    const sortedGames = games.sort((a, b) => 
+        new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()
+)
 
-    console.log('Final games data:', futureGames)
-    return NextResponse.json(futureGames)
+    console.log('Final games data:', sortedGames)
+    return NextResponse.json(sortedGames)
   } catch (error) {
     console.error('Failed to fetch games:', error)
     return NextResponse.json(
