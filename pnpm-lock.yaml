@@ -79,6 +79,9 @@ devDependencies:
   '@types/node':
     specifier: ^20
     version: 20.17.6
+  '@types/prettier':
+    specifier: ^3.0.0
+    version: 3.0.0
   '@types/react':
     specifier: ^18
     version: 18.3.12
@@ -94,6 +97,9 @@ devDependencies:
   postcss:
     specifier: ^8
     version: 8.4.47
+  prettier:
+    specifier: ^3.3.3
+    version: 3.3.3
   tailwindcss:
     specifier: ^3.4.1
     version: 3.4.14
@@ -1390,6 +1396,13 @@ packages:
     resolution: {integrity: sha512-VEI7OdvK2wP7XHnsuXbAJnEpEkF6NjSN45QJlL4VGqZSXsnicpesdTWsg9RISeSdYd3yeRj/y3k5KGjUXYnFwQ==}
     dependencies:
       undici-types: 6.19.8
+    dev: true
+
+  /@types/prettier@3.0.0:
+    resolution: {integrity: sha512-mFMBfMOz8QxhYVbuINtswBp9VL2b4Y0QqYHwqLz3YbgtfAcat2Dl6Y1o4e22S/OVE6Ebl9m7wWiMT2lSbAs1wA==}
+    deprecated: This is a stub types definition. prettier provides its own type definitions, so you do not need this installed.
+    dependencies:
+      prettier: 3.3.3
     dev: true
 
   /@types/prop-types@15.7.13:
@@ -3810,6 +3823,12 @@ packages:
   /prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
+    dev: true
+
+  /prettier@3.3.3:
+    resolution: {integrity: sha512-i2tDNA0O5IrMO757lfrdQZCc2jPNDVntV0m/+4whiDfWaTKfMNgR7Qz0NAeGz/nRqF4m5/6CLzbP4/liHt12Ew==}
+    engines: {node: '>=14'}
+    hasBin: true
     dev: true
 
   /prompts@2.4.2:

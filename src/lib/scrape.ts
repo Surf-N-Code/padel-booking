@@ -15,7 +15,6 @@ export const scrapeWebsite = async (url: string) => {
         return null
       }
 
-      console.log('Response:', response.data);
       return response.data
   
     } catch (error: any) {

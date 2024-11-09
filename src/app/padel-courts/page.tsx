@@ -1,64 +1,41 @@
 'use client'
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { scrapeWebsite } from '@/lib/scrape';
+
+interface Location {
+  name: string;
+  link: string;
+  addressLines: string[];
+}
 
 const PadelLocations = () => {
-  const [locations, setLocations] = useState([]);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAndParseData = async () => {
+    const fetchLocations = async () => {
       try {
-        const response = await scrapeWebsite('https://www.dpv-padel.de/standorte-2/');
-        
-        // Get all table rows (excluding header)
-        const rows = response.match(/<tr[^>]*>[\s\S]*?<\/tr>/g).slice(1);
-        const extractedLocations: { name: string, link: string, addressLines: string[] }[] = [];
-
-        let idx = 0;
-        rows.forEach((row: string) => {
-            if (idx > 0) {
-                return;
-            }
-          const firstCell = row.match(/<td[^>]*has-text-align-left[^>]*>([\s\S]*?)<\/td>/);
-          
-          if (firstCell) {
-            const cellContent = firstCell[1];
-            
-            // Extract name
-            const nameMatch = cellContent.match(/<strong>(.*?)<\/strong>/);
-            const name = nameMatch ? nameMatch[1].trim() : '';
-            
-            // Extract link
-            const linkMatch = cellContent.match(/<a[^>]*href="([^"]*)"[^>]*>/);
-            const link = linkMatch ? linkMatch[1] : '';
-            
-            // Extract address lines
-            let addressContent = cellContent
-              .replace(/<strong>.*?<\/strong>/, '')
-              .replace(/<a.*?<\/a>/, '');
-            
-            const addressLines = addressContent
-              .split(/<br\/?>/g)
-              .map(line => line.trim().replace("<br />", ''))
-              .filter(line => line);
-            
-            if (name) {
-              extractedLocations.push({ name, link, addressLines });
-            }
-          }
-          idx++;
-        });
-        
-        setLocations(extractedLocations);
+        const response = await fetch('/api/padel-courts');
+        if (!response.ok) {
+          throw new Error('Failed to fetch locations');
+        }
+        const data = await response.json();
+        console.log("data",data);
+        setLocations(data);
       } catch (error) {
-        console.error('Error parsing locations:', error);
+        console.error('Error fetching locations:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
     
-    fetchAndParseData();
+    fetchLocations();
   }, []);
   
+  if (isLoading) {
+    return <div>Loading locations...</div>;
+  }
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -72,8 +49,8 @@ const PadelLocations = () => {
               {location.addressLines && (
                 <div className="mt-2 space-y-1">
                   {location.addressLines.map((line, i) => (
-                  <p key={i} className="text-sm text-gray-600">{line}</p>
-                ))}
+                    <p key={i} className="text-sm text-gray-600">{line}</p>
+                  ))}
                 </div>
               )}
               {location.link && (
