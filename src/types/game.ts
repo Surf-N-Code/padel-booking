@@ -8,6 +8,7 @@ export interface Game {
   id: string
   dateTime: string
   venue: string
+  location: string
   level: string
   createdAt: string
   createdBy: string
