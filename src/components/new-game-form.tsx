@@ -25,6 +25,21 @@ import {
 import { GAME_LEVELS } from '@/types/game';
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { useState } from 'react';
+import { Check, ChevronsUpDown } from 'lucide-react';
 
 interface Venue {
   value: string;
@@ -42,6 +57,7 @@ const formSchema = z.object({
 
 export function NewGameForm() {
   const router = useRouter();
+  const [open, setOpen] = useState(false);
 
   const { data: venues = [], isLoading: isLoadingVenues } = useQuery<Venue[]>({
     queryKey: ['venues'],
@@ -57,7 +73,7 @@ export function NewGameForm() {
       date: new Date(),
       startTime: '',
       endTime: '',
-      venue: venues[0]?.value || '',
+      venue: '',
       level: 'mixed',
       players: ['', '', '', ''],
     },
@@ -65,7 +81,7 @@ export function NewGameForm() {
   });
 
   useEffect(() => {
-    if (venues.length > 0 && !form.getValues('venue')) {
+    if (venues?.length > 0 && !form.getValues('venue')) {
       form.setValue('venue', venues[0].value);
     }
   }, [venues, form]);
@@ -139,31 +155,66 @@ export function NewGameForm() {
             render={({ field }) => (
               <FormItem className="flex-1">
                 <FormLabel>Venue</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  disabled={isLoadingVenues}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      {isLoadingVenues ? (
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>Loading venues...</span>
-                        </div>
-                      ) : (
-                        <SelectValue placeholder="Select venue" />
-                      )}
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {venues.map((venue: Venue) => (
-                      <SelectItem key={venue.value} value={venue.value}>
-                        {venue.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={open} onOpenChange={setOpen}>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={open}
+                        className={cn(
+                          'w-full justify-between',
+                          !field.value && 'text-muted-foreground'
+                        )}
+                        disabled={isLoadingVenues}
+                      >
+                        {isLoadingVenues ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Loading venues...</span>
+                          </div>
+                        ) : (
+                          <>
+                            {field.value
+                              ? venues.find(
+                                  (venue) => venue.value === field.value
+                                )?.label
+                              : 'Select venue'}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </>
+                        )}
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                    <Command>
+                      <CommandInput placeholder="Search venue..." />
+                      <CommandEmpty>No venue found.</CommandEmpty>
+                      <CommandGroup>
+                        {venues.map((venue) => (
+                          <CommandItem
+                            key={venue.value}
+                            value={venue.value}
+                            onSelect={(currentValue) => {
+                              form.setValue('venue', currentValue);
+                              setOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                'mr-2 h-4 w-4',
+                                field.value === venue.value
+                                  ? 'opacity-100'
+                                  : 'opacity-0'
+                              )}
+                            />
+                            {venue.label}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
                 <FormMessage />
               </FormItem>
             )}
