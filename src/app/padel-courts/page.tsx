@@ -13,9 +13,13 @@ const PadelLocations = () => {
         
         // Get all table rows (excluding header)
         const rows = response.match(/<tr[^>]*>[\s\S]*?<\/tr>/g).slice(1);
-        const extractedLocations = [];
+        const extractedLocations: { name: string, link: string, addressLines: string[] }[] = [];
 
-        rows.forEach(row => {
+        let idx = 0;
+        rows.forEach((row: string) => {
+            if (idx > 0) {
+                return;
+            }
           const firstCell = row.match(/<td[^>]*has-text-align-left[^>]*>([\s\S]*?)<\/td>/);
           
           if (firstCell) {
@@ -43,6 +47,7 @@ const PadelLocations = () => {
               extractedLocations.push({ name, link, addressLines });
             }
           }
+          idx++;
         });
         
         setLocations(extractedLocations);
