@@ -61,9 +61,8 @@ export function VenueCombobox({ form, venues, isLoading }: VenueComboboxProps) {
                     </div>
                   ) : (
                     <>
-                      {field.value && venues
-                        ? venues.find((venue) => venue.id === field.value.id)
-                            ?.label
+                      {field.value && field.value.label
+                        ? field.value.label
                         : 'Select venue'}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </>
