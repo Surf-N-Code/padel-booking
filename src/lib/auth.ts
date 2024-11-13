@@ -20,23 +20,27 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         try {
+          console.log('auth.ts: authorize', credentials);
           if (!credentials?.email || !credentials?.password) {
             return null;
           }
 
           const userJson = await redis.get(`user:${credentials.email}`);
+          console.log('auth.ts: userJson', userJson);
           if (!userJson) return null;
 
           const user = JSON.parse(userJson) as User;
+          console.log('auth.ts: user', user);
           const passwordsMatch = await bcrypt.compare(
             credentials.password,
             user.password
           );
-
+          console.log('auth.ts: passwordsMatch', passwordsMatch);
           if (!passwordsMatch) return null;
 
           // Return sanitized user object
           const { password: _, ...userWithoutPassword } = user;
+          console.log('auth.ts: userWithoutPassword', userWithoutPassword);
           return userWithoutPassword;
         } catch (error) {
           console.error('Auth error:', error);
@@ -54,9 +58,9 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
+      if (token) {
         session.user.id = token.id as string;
-        session.user.email = token.email as string | undefined;
+        session.user.email = token.email as string;
       }
       return session;
     },
