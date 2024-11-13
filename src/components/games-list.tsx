@@ -43,6 +43,10 @@ const LEVEL_BADGES: Record<
   mixed: { label: 'Mixed Levels', variant: 'secondary' },
 };
 
+const sortPlayers = (players: Player[] = []) => {
+  return [...players].sort((a, b) => a.name.localeCompare(b.name));
+};
+
 export function GamesList() {
   const queryClient = useQueryClient();
   const [playerNames, setPlayerNames] = useState<Record<string, string>>({});
@@ -77,7 +81,13 @@ export function GamesList() {
   );
 
   const joinGame = useMutation({
-    mutationFn: async (gameId: string) => {
+    mutationFn: async ({
+      gameId,
+      playerName,
+    }: {
+      gameId: string;
+      playerName: string;
+    }) => {
       setLoadingState({ gameId, type: 'join' });
       const response = await fetch(`/api/games/${gameId}/join`, {
         method: 'POST',
@@ -85,7 +95,7 @@ export function GamesList() {
         body: JSON.stringify({
           player: {
             id: crypto.randomUUID(),
-            name: playerNames[gameId] || 'Anonymous Player',
+            name: playerName || 'Anonymous Player',
             userId: 'temp-user-id',
           },
         }),
@@ -93,33 +103,46 @@ export function GamesList() {
       if (!response.ok) throw new Error('Failed to join game');
       return response.json();
     },
-    onMutate: async (gameId) => {
+    onMutate: async ({ gameId, playerName }) => {
       await queryClient.cancelQueries({ queryKey: ['games'] });
       const previousGames = queryClient.getQueryData<Game[]>(['games']);
+
+      setPlayerNames((prev) => ({
+        ...prev,
+        [gameId as string]: '',
+      }));
 
       queryClient.setQueryData<Game[]>(['games'], (old) =>
         old?.map((game) => {
           if (game.id === gameId) {
+            const newPlayers = sortPlayers([
+              ...(game.players || []),
+              {
+                id: 'temp-' + crypto.randomUUID(),
+                name: playerName || 'Anonymous Player',
+                userId: 'temp-user-id',
+              },
+            ]);
             return {
               ...game,
-              players: [
-                ...(game.players || []),
-                {
-                  id: 'temp-' + crypto.randomUUID(),
-                  name: playerNames[gameId] || 'Anonymous Player',
-                  userId: 'temp-user-id',
-                },
-              ],
+              players: newPlayers,
             };
           }
           return game;
         })
       );
 
-      return { previousGames };
+      return { previousGames, previousPlayerName: playerName, gameId };
     },
     onError: (_, __, context) => {
       queryClient.setQueryData(['games'], context?.previousGames);
+      // Restore input value on error
+      if (context?.gameId && context.previousPlayerName) {
+        setPlayerNames((prev) => ({
+          ...prev,
+          [context.gameId]: context.previousPlayerName,
+        }));
+      }
     },
     onSuccess: (_, gameId) => {
       queryClient.invalidateQueries({ queryKey: ['games'] });
@@ -181,7 +204,10 @@ export function GamesList() {
 
   const handleSavePlayers = async (gameId: string) => {
     try {
-      await joinGame.mutate(gameId);
+      await joinGame.mutate({
+        gameId,
+        playerName: playerNames[gameId],
+      });
     } catch (error) {
       console.error('Failed to join game:', error);
     }
@@ -322,7 +348,7 @@ export function GamesList() {
                     Players ({game.players?.length || 0}/4):
                   </h3>
                   <ul className="space-y-1">
-                    {game.players?.map((player) => (
+                    {sortPlayers(game.players)?.map((player) => (
                       <li
                         key={player.id}
                         className="flex items-center justify-between"
