@@ -9,6 +9,7 @@ import type { Game, Player, Venue } from '@/types/game';
 import { useState } from 'react';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
+import { Badge } from './ui/badge';
 import {
   Command,
   CommandEmpty,
@@ -24,7 +25,6 @@ import {
 } from '@/components/ui/popover';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Badge } from './ui/badge';
 
 type LoadingState = {
   gameId: string;
@@ -64,20 +64,16 @@ export function GamesList() {
     },
   });
 
-  const { data: venues = [] } = useQuery({
-    queryKey: ['venues'],
-    queryFn: async () => {
-      const res = await fetch('/api/venues');
-      if (!res.ok) throw new Error('Failed to fetch venues');
-      return res.json();
-    },
-  });
+  // Get unique venues from games
+  const uniqueVenues = Array.from(
+    new Set(games.map((game) => game.venue))
+  ).sort((a: Venue, b: Venue) => a.label.localeCompare(b.label));
 
   // Filter games based on availability and selected venue
   const filteredGames = games.filter(
     (game) =>
       (!showAvailableOnly || (game.players?.length || 0) < 4) &&
-      (!selectedVenue || game.venue === selectedVenue)
+      (!selectedVenue || game.venue.label === selectedVenue)
   );
 
   const joinGame = useMutation({
@@ -198,7 +194,7 @@ export function GamesList() {
                 className="w-full justify-between"
               >
                 {selectedVenue
-                  ? venues.find((venue: Venue) => venue.value === selectedVenue)
+                  ? uniqueVenues.find((venue) => venue.label === selectedVenue)
                       ?.label
                   : 'Filter by venue'}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -208,6 +204,7 @@ export function GamesList() {
               <Command>
                 <CommandInput placeholder="Search venue..." />
                 <CommandList>
+                  {' '}
                   <CommandEmpty>No venue found.</CommandEmpty>
                   <CommandGroup>
                     <CommandItem
@@ -224,23 +221,23 @@ export function GamesList() {
                       />
                       All venues
                     </CommandItem>
-                    {venues.map((venue: Venue) => (
+                    {uniqueVenues.map((venue) => (
                       <CommandItem
-                        key={venue.name}
+                        key={venue.id}
                         onSelect={() => {
-                          setSelectedVenue(venue.name);
+                          setSelectedVenue(venue.label);
                           setOpen(false);
                         }}
                       >
                         <Check
                           className={cn(
                             'mr-2 h-4 w-4',
-                            selectedVenue === venue.name
+                            selectedVenue === venue.label
                               ? 'opacity-100'
                               : 'opacity-0'
                           )}
                         />
-                        {venue.name}
+                        {venue.label}
                       </CommandItem>
                     ))}
                   </CommandGroup>
@@ -271,8 +268,7 @@ export function GamesList() {
                     </p>
                     <p className="font-medium flex items-center gap-1">
                       <MapPin className="h-4 w-4" />
-                      {venues.find((v) => v.value === game.venue)?.label ||
-                        game.venue}
+                      {game.venue.label}
                     </p>
                   </div>
                 </div>

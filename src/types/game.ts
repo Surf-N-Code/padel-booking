@@ -7,7 +7,7 @@ export interface Player {
 export interface Game {
   id: string;
   dateTime: string;
-  venue: string;
+  venue: Venue;
   location: string;
   level: string;
   createdAt: string;
@@ -16,9 +16,10 @@ export interface Game {
 }
 
 export interface Venue {
-  name: string;
+  id: string;
+  label: string;
   link: string;
-  addressLines: string[];
+  addressLines: string;
 }
 
 export const GAME_LEVELS = [

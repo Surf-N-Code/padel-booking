@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Select,
   SelectContent,
@@ -51,7 +51,10 @@ const formSchema = z.object({
   date: z.date(),
   startTime: z.string().min(1),
   endTime: z.string().min(1),
-  venue: z.string().min(1),
+  venue: z.object({
+    value: z.string().min(1),
+    label: z.string().min(1),
+  }),
   level: z.string().min(1),
   players: z.array(z.string().optional()).length(4),
 });
@@ -59,6 +62,7 @@ const formSchema = z.object({
 export function NewGameForm() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   let {
     data: venues,
@@ -76,7 +80,10 @@ export function NewGameForm() {
       date: new Date(),
       startTime: '',
       endTime: '',
-      venue: '',
+      venue: {
+        value: '',
+        label: '',
+      },
       level: 'mixed',
       players: ['', '', '', ''],
     },
@@ -118,6 +125,7 @@ export function NewGameForm() {
       return response.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['games'] });
       router.push('/');
       router.refresh();
     },

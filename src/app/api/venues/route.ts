@@ -3,32 +3,36 @@ import { scrapeWebsite } from '@/lib/scrape';
 import { lg } from '@/lib/utils';
 import { NextResponse } from 'next/server';
 
-const CACHE_KEY = 'padel:locations';
+const CACHE_KEY = 'padel:venues';
 const CACHE_EXPIRY = 60 * 60 * 24; // 24 hours in seconds
 
 export async function GET() {
   try {
     let cachedLocations = await redis.get(CACHE_KEY);
-    console.log('cachedLocations', cachedLocations);
 
-    let locations: any[] = [];
+    let venues: any[] = [];
 
     if (cachedLocations) {
-      locations = JSON.parse(cachedLocations);
+      venues = JSON.parse(cachedLocations);
     } else {
-      locations = [];
+      venues = [];
     }
-    lg(`locations: ${locations.length}`);
 
-    if (!locations || locations.length === 0) {
+    if (!venues || venues.length === 0) {
       lg('no cached data, scraping', 'red');
-      locations = await scrapeVenues();
-      lg(`locations after scrape: ${locations.length}`, 'green');
+      venues = await scrapeVenues();
     }
 
-    const venues = locations.map((location) => ({
-      value: location.name.toLowerCase().replace(/\s+/g, '-'),
-      label: location.name,
+    venues = venues.map((venue) => ({
+      id: venue.name.toLowerCase().replace(/\s+/g, '-'),
+      label: venue.name,
+      address: venue.addressLines[0]
+        .split('<br />')
+        .map((line: string) => line.trim())
+        .join(' ')
+        .trim()
+        .replace(/^,/, ''),
+      link: venue.link,
     }));
 
     return NextResponse.json(venues);
@@ -57,7 +61,6 @@ const scrapeVenues = async () => {
     );
 
     if (firstCell) {
-      lg(`firstCell: ${firstCell[1]}`, 'green');
       const cellContent = firstCell[1];
 
       const nameMatch = cellContent.match(/<strong>(.*?)<\/strong>/);

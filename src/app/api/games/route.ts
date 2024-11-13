@@ -8,11 +8,11 @@ export async function POST(request: Request) {
     const data = await request.json();
     const id = crypto.randomUUID();
 
-    const game: Partial<Game> = {
+    const game = {
       id,
       dateTime: data.dateTime,
       level: data.level,
-      venue: data.venue,
+      venue: JSON.stringify(data.venue),
       createdAt: new Date().toISOString(),
       createdBy: data.createdBy || 'anonymous', // Replace when auth is added
     };
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ id, ...game });
+    return NextResponse.json({ game });
   } catch (error) {
     console.error('Failed to create game:', error);
     return NextResponse.json(
@@ -57,7 +57,7 @@ export async function GET() {
     const games = await Promise.all(
       gameIds.map(async (id) => {
         const [gameData, dateTimeScore] = await Promise.all([
-          redis.hgetall(`game:${id}`) as Partial<Game>,
+          redis.hgetall(`game:${id}`),
           redis.zscore('games:by:date', id),
         ]);
         const players = await redis.smembers(`game:${id}:players`);
@@ -66,6 +66,7 @@ export async function GET() {
 
         return {
           ...gameData,
+          venue: JSON.parse(gameData.venue || '{}'),
           id,
           dateTime: new Date(parseInt(dateTimeScore)).toISOString(),
           players: players.map((player) => JSON.parse(player)),

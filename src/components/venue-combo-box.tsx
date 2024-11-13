@@ -24,10 +24,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { Venue } from '@/types/game';
 
 interface VenueComboboxProps {
   form: any; // Replace with your form type
-  venues: Array<{ value: string; label: string }> | undefined;
+  venues: Venue[] | undefined;
   isLoading: boolean;
 }
 
@@ -61,7 +62,7 @@ export function VenueCombobox({ form, venues, isLoading }: VenueComboboxProps) {
                   ) : (
                     <>
                       {field.value && venues
-                        ? venues.find((venue) => venue.value === field.value)
+                        ? venues.find((venue) => venue.id === field.value.id)
                             ?.label
                         : 'Select venue'}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -80,17 +81,17 @@ export function VenueCombobox({ form, venues, isLoading }: VenueComboboxProps) {
                       venues.length > 0 &&
                       venues?.map((venue, idx) => (
                         <CommandItem
-                          key={idx}
-                          value={venue?.value}
+                          key={venue?.id}
+                          value={venue?.label}
                           onSelect={() => {
-                            form.setValue('venue', venue?.value);
+                            form.setValue('venue', venue);
                             setOpen(false);
                           }}
                         >
                           <Check
                             className={cn(
                               'mr-2 h-4 w-4',
-                              field.value === venue?.value
+                              field.value.id === venue?.id
                                 ? 'opacity-100'
                                 : 'opacity-0'
                             )}
