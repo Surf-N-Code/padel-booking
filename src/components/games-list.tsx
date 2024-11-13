@@ -81,9 +81,7 @@ export function GamesList() {
       setLoadingState({ gameId, type: 'join' });
       const response = await fetch(`/api/games/${gameId}/join`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           player: {
             id: crypto.randomUUID(),
@@ -92,10 +90,36 @@ export function GamesList() {
           },
         }),
       });
-      if (!response.ok) {
-        throw new Error('Failed to join game');
-      }
+      if (!response.ok) throw new Error('Failed to join game');
       return response.json();
+    },
+    onMutate: async (gameId) => {
+      await queryClient.cancelQueries({ queryKey: ['games'] });
+      const previousGames = queryClient.getQueryData<Game[]>(['games']);
+
+      queryClient.setQueryData<Game[]>(['games'], (old) =>
+        old?.map((game) => {
+          if (game.id === gameId) {
+            return {
+              ...game,
+              players: [
+                ...(game.players || []),
+                {
+                  id: 'temp-' + crypto.randomUUID(),
+                  name: playerNames[gameId] || 'Anonymous Player',
+                  userId: 'temp-user-id',
+                },
+              ],
+            };
+          }
+          return game;
+        })
+      );
+
+      return { previousGames };
+    },
+    onError: (_, __, context) => {
+      queryClient.setQueryData(['games'], context?.previousGames);
     },
     onSuccess: (_, gameId) => {
       queryClient.invalidateQueries({ queryKey: ['games'] });
@@ -120,15 +144,32 @@ export function GamesList() {
       setLoadingState({ gameId, playerId: player.id, type: 'leave' });
       const response = await fetch(`/api/games/${gameId}/leave`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ player }),
       });
-      if (!response.ok) {
-        throw new Error('Failed to leave game');
-      }
+      if (!response.ok) throw new Error('Failed to leave game');
       return response.json();
+    },
+    onMutate: async ({ gameId, player }) => {
+      await queryClient.cancelQueries({ queryKey: ['games'] });
+      const previousGames = queryClient.getQueryData<Game[]>(['games']);
+
+      queryClient.setQueryData<Game[]>(['games'], (old) =>
+        old?.map((game) => {
+          if (game.id === gameId) {
+            return {
+              ...game,
+              players: (game.players || []).filter((p) => p.id !== player.id),
+            };
+          }
+          return game;
+        })
+      );
+
+      return { previousGames };
+    },
+    onError: (_, __, context) => {
+      queryClient.setQueryData(['games'], context?.previousGames);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['games'] });
