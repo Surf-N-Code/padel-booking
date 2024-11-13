@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/popover';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Skeleton } from './ui/skeleton';
 
 type LoadingState = {
   gameId: string;
@@ -233,7 +234,20 @@ export function GamesList() {
     );
   };
 
-  if (isLoading) return <div>Loading games...</div>;
+  if (isLoading)
+    return (
+      <div className="flex flex-col space-y-3">
+        <div className="flex justify-between space-y-2">
+          <Skeleton className="h-8 w-[250px]" />
+          <Skeleton className="h-8 w-[200px]" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <Skeleton className="mt-6 h-[320px] w-[330px] rounded-xl" />
+          <Skeleton className="mt-6 h-[320px] w-[330px] rounded-xl" />
+          <Skeleton className="mt-6 h-[320px] w-[330px] rounded-xl" />
+        </div>
+      </div>
+    );
   if (error) return <div>Error loading games: {error.message}</div>;
   if (!games?.length) return <div>No games scheduled yet.</div>;
 

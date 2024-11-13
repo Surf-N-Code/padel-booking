@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { GAME_LEVELS } from '@/types/game';
+import { GAME_LEVELS, Venue } from '@/types/game';
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -41,23 +41,7 @@ import { useState } from 'react';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { VenueCombobox } from './venue-combo-box';
 import { fetchVenues } from '@/lib/api';
-
-interface Venue {
-  value: string;
-  label: string;
-}
-
-const formSchema = z.object({
-  date: z.date(),
-  startTime: z.string().min(1),
-  endTime: z.string().min(1),
-  venue: z.object({
-    value: z.string().min(1),
-    label: z.string().min(1),
-  }),
-  level: z.string().min(1),
-  players: z.array(z.string().optional()).length(4),
-});
+import { formSchema } from '@/formSchema/newGame';
 
 export function NewGameForm() {
   const router = useRouter();
@@ -81,8 +65,10 @@ export function NewGameForm() {
       startTime: '',
       endTime: '',
       venue: {
-        value: '',
+        id: '',
         label: '',
+        link: '',
+        addressLines: '',
       },
       level: 'mixed',
       players: ['', '', '', ''],
@@ -91,7 +77,7 @@ export function NewGameForm() {
 
   useEffect(() => {
     if (venues && venues.length > 0 && !form.getValues('venue')) {
-      form.setValue('venue', venues[0].value);
+      form.setValue('venue', venues[0]);
     }
   }, [venues, form]);
 

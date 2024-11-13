@@ -25,9 +25,12 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Venue } from '@/types/game';
+import { formSchema } from '@/formSchema/newGame';
+import { UseFormReturn } from 'react-hook-form';
+import * as z from 'zod';
 
 interface VenueComboboxProps {
-  form: any; // Replace with your form type
+  form: UseFormReturn<z.infer<typeof formSchema>>;
   venues: Venue[] | undefined;
   isLoading: boolean;
 }
