@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
@@ -15,12 +15,11 @@ const PadelLocations = () => {
   useEffect(() => {
     const fetchLocations = async () => {
       try {
-        const response = await fetch('/api/padel-courts');
+        const response = await fetch('/api/scrape-padel-courts');
         if (!response.ok) {
           throw new Error('Failed to fetch locations');
         }
         const data = await response.json();
-        console.log("data",data);
         setLocations(data);
       } catch (error) {
         console.error('Error fetching locations:', error);
@@ -28,10 +27,10 @@ const PadelLocations = () => {
         setIsLoading(false);
       }
     };
-    
+
     fetchLocations();
   }, []);
-  
+
   if (isLoading) {
     return <div>Loading locations...</div>;
   }
@@ -49,12 +48,14 @@ const PadelLocations = () => {
               {location.addressLines && (
                 <div className="mt-2 space-y-1">
                   {location.addressLines.map((line, i) => (
-                    <p key={i} className="text-sm text-gray-600">{line}</p>
+                    <p key={i} className="text-sm text-gray-600">
+                      {line}
+                    </p>
                   ))}
                 </div>
               )}
               {location.link && (
-                <a 
+                <a
                   href={location.link}
                   target="_blank"
                   rel="noopener noreferrer"

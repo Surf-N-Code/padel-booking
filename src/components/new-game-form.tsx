@@ -1,6 +1,5 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -40,6 +39,8 @@ import {
 } from '@/components/ui/popover';
 import { useState } from 'react';
 import { Check, ChevronsUpDown } from 'lucide-react';
+import { VenueCombobox } from './venue-combo-box';
+import { fetchVenues } from '@/lib/api';
 
 interface Venue {
   value: string;
@@ -59,14 +60,16 @@ export function NewGameForm() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
-  const { data: venues = [], isLoading: isLoadingVenues } = useQuery<Venue[]>({
+  let {
+    data: venues,
+    isLoading: isLoadingVenues,
+    error: venuesError,
+  } = useQuery<Venue[]>({
     queryKey: ['venues'],
-    queryFn: async () => {
-      const res = await fetch('/api/venues');
-      if (!res.ok) throw new Error('Failed to fetch venues');
-      return res.json();
-    },
+    queryFn: fetchVenues,
   });
+
+  console.log('venues', venues);
 
   const form = useForm<z.infer<typeof formSchema>>({
     defaultValues: {
@@ -77,11 +80,10 @@ export function NewGameForm() {
       level: 'mixed',
       players: ['', '', '', ''],
     },
-    resolver: zodResolver(formSchema),
   });
 
   useEffect(() => {
-    if (venues?.length > 0 && !form.getValues('venue')) {
+    if (venues && venues.length > 0 && !form.getValues('venue')) {
       form.setValue('venue', venues[0].value);
     }
   }, [venues, form]);
@@ -94,6 +96,9 @@ export function NewGameForm() {
 
       const response = await fetch('/api/games', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           dateTime: dateTime.toISOString(),
           venue: values.venue,
@@ -105,6 +110,11 @@ export function NewGameForm() {
           })),
         }),
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to create game');
+      }
+
       return response.json();
     },
     onSuccess: () => {
@@ -115,6 +125,14 @@ export function NewGameForm() {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     createGame.mutate(values);
+  }
+
+  if (venuesError) {
+    return (
+      <div className="text-red-500">
+        Error loading venues. Please try again later.
+      </div>
+    );
   }
 
   return (
@@ -149,75 +167,10 @@ export function NewGameForm() {
         />
 
         <div className="flex gap-4">
-          <FormField
-            control={form.control}
-            name="venue"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>Venue</FormLabel>
-                <Popover open={open} onOpenChange={setOpen}>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={open}
-                        className={cn(
-                          'w-full justify-between',
-                          !field.value && 'text-muted-foreground'
-                        )}
-                        disabled={isLoadingVenues}
-                      >
-                        {isLoadingVenues ? (
-                          <div className="flex items-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>Loading venues...</span>
-                          </div>
-                        ) : (
-                          <>
-                            {field.value
-                              ? venues.find(
-                                  (venue) => venue.value === field.value
-                                )?.label
-                              : 'Select venue'}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </>
-                        )}
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                    <Command>
-                      <CommandInput placeholder="Search venue..." />
-                      <CommandEmpty>No venue found.</CommandEmpty>
-                      <CommandGroup>
-                        {venues.map((venue) => (
-                          <CommandItem
-                            key={venue.value}
-                            value={venue.value}
-                            onSelect={(currentValue) => {
-                              form.setValue('venue', currentValue);
-                              setOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                'mr-2 h-4 w-4',
-                                field.value === venue.value
-                                  ? 'opacity-100'
-                                  : 'opacity-0'
-                              )}
-                            />
-                            {venue.label}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
+          <VenueCombobox
+            form={form}
+            venues={venues}
+            isLoading={isLoadingVenues}
           />
 
           <FormField
@@ -310,8 +263,19 @@ export function NewGameForm() {
           ))}
         </div>
 
-        <Button type="submit" className="w-full">
-          Create Game
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={createGame.isPending}
+        >
+          {createGame.isPending ? (
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Creating game...</span>
+            </div>
+          ) : (
+            'Create Game'
+          )}
         </Button>
       </form>
     </Form>
