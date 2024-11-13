@@ -251,23 +251,26 @@ export function GamesList() {
           </Label>
         </div>
 
-        <div className="w-[200px]">
+        <div className="w-[300px]">
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 role="combobox"
                 aria-expanded={open}
-                className="w-full justify-between"
+                className="w-full justify-between truncate"
               >
-                {selectedVenue
-                  ? uniqueVenues.find((venue) => venue.label === selectedVenue)
-                      ?.label
-                  : 'Filter by venue'}
+                <span className="truncate">
+                  {selectedVenue
+                    ? uniqueVenues.find(
+                        (venue) => venue.label === selectedVenue
+                      )?.label
+                    : 'Filter by venue'}
+                </span>
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-0">
+            <PopoverContent className="w-[300px] p-0">
               <Command>
                 <CommandInput placeholder="Search venue..." />
                 <CommandList>
@@ -295,6 +298,7 @@ export function GamesList() {
                           setSelectedVenue(venue.label);
                           setOpen(false);
                         }}
+                        className="truncate"
                       >
                         <Check
                           className={cn(
@@ -304,7 +308,7 @@ export function GamesList() {
                               : 'opacity-0'
                           )}
                         />
-                        {venue.label}
+                        <span className="truncate">{venue.label}</span>
                       </CommandItem>
                     ))}
                   </CommandGroup>
