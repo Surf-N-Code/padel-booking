@@ -315,6 +315,12 @@ export function GamesList() {
                                 [game.id]: e.target.value,
                               }))
                             }
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && playerNames[game.id]) {
+                                e.preventDefault();
+                                handleSavePlayers(game.id);
+                              }
+                            }}
                           />
                           <Button
                             variant="outline"
