@@ -15,16 +15,16 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        username: { label: 'Username', type: 'text' },
+        email: { label: 'email', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         try {
-          if (!credentials?.username || !credentials?.password) {
+          if (!credentials?.email || !credentials?.password) {
             return null;
           }
 
-          const userJson = await redis.get(`user:${credentials.username}`);
+          const userJson = await redis.get(`user:${credentials.email}`);
           if (!userJson) return null;
 
           const user = JSON.parse(userJson) as User;
