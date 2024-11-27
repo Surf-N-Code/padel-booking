@@ -24,21 +24,7 @@ import {
 import { GAME_LEVELS, Venue } from '@/types/game';
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { useState } from 'react';
-import { Check, ChevronsUpDown } from 'lucide-react';
 import { VenueCombobox } from './venue-combo-box';
 import { fetchVenues } from '@/lib/api';
 import { formSchema } from '@/formSchema/newGame';

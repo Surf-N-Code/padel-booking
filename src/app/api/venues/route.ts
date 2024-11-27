@@ -8,7 +8,7 @@ const CACHE_EXPIRY = 60 * 60 * 24; // 24 hours in seconds
 
 export async function GET() {
   try {
-    let cachedLocations = await redis.get(CACHE_KEY);
+    const cachedLocations = await redis.get(CACHE_KEY);
 
     let venues: any[] = [];
 

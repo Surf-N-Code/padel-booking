@@ -81,7 +81,7 @@ export function VenueCombobox({ form, venues, isLoading }: VenueComboboxProps) {
                   <CommandGroup>
                     {venues &&
                       venues.length > 0 &&
-                      venues?.map((venue, idx) => (
+                      venues?.map((venue) => (
                         <CommandItem
                           key={venue?.id}
                           value={venue?.label}

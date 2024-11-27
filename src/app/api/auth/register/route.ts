@@ -42,6 +42,7 @@ export async function POST(req: Request) {
     await redis.sadd('users', email);
 
     // Return sanitized user object (without password)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...sanitizedUser } = user;
 
     return NextResponse.json(
