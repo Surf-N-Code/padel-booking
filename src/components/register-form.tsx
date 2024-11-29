@@ -27,6 +27,7 @@ export function RegisterForm() {
       body: JSON.stringify({
         email: formData.get('email'),
         password: formData.get('password'),
+        phone: formData.get('phone'),
       }),
     });
 
@@ -55,6 +56,18 @@ export function RegisterForm() {
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input id="password" name="password" type="password" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">WhatsApp Phone Number</Label>
+              <Input
+                id="phone"
+                name="phone"
+                type="tel"
+                placeholder="+1234567890"
+                pattern="^\+[0-9]{10,15}$"
+                title="Phone number must start with + and contain 10-15 digits"
+                required
+              />
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" className="w-full">
