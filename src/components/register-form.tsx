@@ -66,7 +66,6 @@ export function RegisterForm() {
                 placeholder="+1234567890"
                 pattern="^\+[0-9]{10,15}$"
                 title="Phone number must start with + and contain 10-15 digits"
-                required
               />
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}

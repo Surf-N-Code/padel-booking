@@ -48,6 +48,14 @@ import { useQuery } from '@tanstack/react-query';
 import { Venue } from '@/types/game';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
+  BreadcrumbPage,
+} from '@/components/ui/breadcrumb';
 
 const profileFormSchema = z
   .object({
@@ -155,202 +163,210 @@ export default function ProfilePage() {
 
   if (!isInitialized) {
     return (
-      <div className="container max-w-2xl py-10">
-        <Card>
-          <CardContent className="p-6">Loading...</CardContent>
-        </Card>
-      </div>
+      <main className="container mx-auto py-10">
+        <div className="space-y-6">
+          <Card>
+            <CardContent className="p-6">Loading...</CardContent>
+          </Card>
+        </div>
+      </main>
     );
   }
 
   return (
-    <div className="container max-w-2xl py-10">
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile Settings</CardTitle>
-          <CardDescription>
-            Update your profile information and preferences
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Your name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+    <main className="container mx-auto py-10">
+      <div className="space-y-6">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/">Games</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Profile</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
 
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="your.email@example.com"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+        <h1 className="text-3xl font-bold">Profile Settings</h1>
 
-              <FormField
-                control={form.control}
-                name="currentPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Current Password</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="Enter to change password"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Your name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name="newPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>New Password</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="Enter new password"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder="your.email@example.com"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name="padelLevel"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Padel Level</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
+            <FormField
+              control={form.control}
+              name="currentPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Current Password</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      placeholder="Enter to change password"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="newPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>New Password</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      placeholder="Enter new password"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="padelLevel"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Padel Level</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your level" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {GAME_LEVELS.map((level) => (
+                        <SelectItem key={level.value} value={level.value}>
+                          {level.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="favoriteVenues"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Favorite Venues</FormLabel>
+                  <Popover open={open} onOpenChange={setOpen}>
+                    <PopoverTrigger asChild>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select your level" />
-                        </SelectTrigger>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={open}
+                          className="w-full justify-between"
+                        >
+                          {field.value.length > 0
+                            ? `${field.value.length} venues selected`
+                            : 'Select favorite venues'}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
                       </FormControl>
-                      <SelectContent>
-                        {GAME_LEVELS.map((level) => (
-                          <SelectItem key={level.value} value={level.value}>
-                            {level.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="favoriteVenues"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Favorite Venues</FormLabel>
-                    <Popover open={open} onOpenChange={setOpen}>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            aria-expanded={open}
-                            className="w-full justify-between"
-                          >
-                            {field.value.length > 0
-                              ? `${field.value.length} venues selected`
-                              : 'Select favorite venues'}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[300px] p-0">
-                        <Command>
-                          <CommandInput placeholder="Search venues..." />
-                          <CommandList>
-                            <CommandEmpty>No venue found.</CommandEmpty>
-                            <ScrollArea className="h-[200px]">
-                              <CommandGroup>
-                                {venues.map((venue) => (
-                                  <CommandItem
-                                    key={venue.id}
-                                    onSelect={() => {
-                                      const values = new Set(field.value);
-                                      if (values.has(venue.id)) {
-                                        values.delete(venue.id);
-                                      } else {
-                                        values.add(venue.id);
-                                      }
-                                      field.onChange(Array.from(values));
-                                    }}
-                                  >
-                                    <div className="flex items-center gap-2 w-full">
-                                      <Check
-                                        className={cn(
-                                          'mr-2 h-4 w-4',
-                                          field.value.includes(venue.id)
-                                            ? 'opacity-100'
-                                            : 'opacity-0'
-                                        )}
-                                      />
-                                      <div className="flex flex-col">
-                                        <span className="font-medium">
-                                          {venue.label}
-                                        </span>
-                                        <span className="text-xs text-muted-foreground">
-                                          {venue.addressLines}
-                                        </span>
-                                      </div>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[300px] p-0">
+                      <Command>
+                        <CommandInput placeholder="Search venues..." />
+                        <CommandList>
+                          <CommandEmpty>No venue found.</CommandEmpty>
+                          <ScrollArea className="h-[200px]">
+                            <CommandGroup>
+                              {venues.map((venue) => (
+                                <CommandItem
+                                  key={venue.id}
+                                  onSelect={() => {
+                                    const values = new Set(field.value);
+                                    if (values.has(venue.id)) {
+                                      values.delete(venue.id);
+                                    } else {
+                                      values.add(venue.id);
+                                    }
+                                    field.onChange(Array.from(values));
+                                  }}
+                                >
+                                  <div className="flex items-center gap-2 w-full">
+                                    <Check
+                                      className={cn(
+                                        'mr-2 h-4 w-4',
+                                        field.value.includes(venue.id)
+                                          ? 'opacity-100'
+                                          : 'opacity-0'
+                                      )}
+                                    />
+                                    <div className="flex flex-col">
+                                      <span className="font-medium">
+                                        {venue.label}
+                                      </span>
+                                      <span className="text-xs text-muted-foreground">
+                                        {venue.addressLines}
+                                      </span>
                                     </div>
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </ScrollArea>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </ScrollArea>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Updating...' : 'Update Profile'}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </div>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? 'Updating...' : 'Update Profile'}
+            </Button>
+          </form>
+        </Form>
+      </div>
+    </main>
   );
 }
