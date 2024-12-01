@@ -31,13 +31,27 @@ import { GAME_LEVELS } from '@/types/game';
 import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 
-const profileFormSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email(),
-  currentPassword: z.string().optional(),
-  newPassword: z.string().min(6).optional(),
-  padelLevel: z.string(),
-});
+const profileFormSchema = z
+  .object({
+    name: z.string().min(2, 'Name must be at least 2 characters'),
+    email: z.string().email(),
+    currentPassword: z.string().nullish(),
+    newPassword: z.string().nullish(),
+    padelLevel: z.string(),
+  })
+  .refine(
+    (data) => {
+      if (!data.currentPassword && !data.newPassword) return true;
+      return (
+        data.currentPassword && data.newPassword && data.newPassword.length >= 6
+      );
+    },
+    {
+      message:
+        'Both current and new password (min 6 chars) are required to change password',
+      path: ['newPassword'],
+    }
+  );
 
 export default function ProfilePage() {
   const { data: session, update } = useSession();
