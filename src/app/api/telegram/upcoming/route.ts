@@ -1,7 +1,11 @@
 import { redis } from '@/lib/redis';
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { formatGameForTelegram, sendTelegramMessage } from '@/lib/telegram';
+import {
+  formatGameForTelegram,
+  formatUpcomingGameForTelegram,
+  sendTelegramMessage,
+} from '@/lib/telegram';
 import { Game } from '@/types/game';
 
 export async function GET() {
@@ -31,17 +35,11 @@ export async function GET() {
 
     // Format message for Telegram
     if (gamesWithOpenSlots.length > 0) {
-      const headersList = headers();
-      const host = headersList.get('host');
-      const protocol =
-        process.env.NODE_ENV === 'development' ? 'http' : 'https';
-      const baseUrl = `${protocol}://${host}`;
-
       const message = `
 🎾 <b>Upcoming Games with Open Slots</b>
 
 ${gamesWithOpenSlots
-  .map((game) => formatGameForTelegram(game as Game, baseUrl))
+  .map((game) => formatUpcomingGameForTelegram(game as Game))
   .join('\n\n')}
 `;
 

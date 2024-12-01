@@ -51,13 +51,10 @@ export async function POST(req: NextRequest) {
       players: [...currentPlayers.map((p) => JSON.parse(p)), player],
     };
 
-    await sendTelegramMessage(
-      formatPlayerJoinedMessage(game, player, baseUrl),
-      {
-        text: 'View Game',
-        url: `${process.env.PROD_API_URL}?id=${game.id}`,
-      }
-    );
+    await sendTelegramMessage(formatPlayerJoinedMessage(game, player), {
+      text: 'View Game',
+      url: `${process.env.PROD_API_URL}?id=${game.id}`,
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

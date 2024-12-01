@@ -42,7 +42,7 @@ export async function sendTelegramMessage(
         body: JSON.stringify({
           chat_id: TELEGRAM_CHAT_ID,
           text,
-          //   parse_mode: 'HTML',
+          parse_mode: 'HTML',
           disable_web_page_preview: true,
           ...(replyMarkup && {
             reply_markup: {
@@ -70,18 +70,19 @@ export async function sendTelegramMessage(
   }
 }
 
-export function formatGameForTelegram(game: Game, baseUrl: string): string {
+export function formatGameForTelegram(game: Game): string {
   const date = format(new Date(game.dateTime), 'PPP');
   const time = format(new Date(game.dateTime), 'HH:mm');
   const availableSpots = 4 - (game.players?.length || 0);
-  const joinUrl = `${baseUrl}/games/${game.id}`;
+  const joinUrl = `${process.env.PROD_API_URL}?id=${game.id}`;
+  const venueName = JSON.parse(game?.venue.toString()).label;
 
   return `
 🎾 New Padel Game
 
 📅 Date: ${date}
 ⏰ Time: ${time}
-📍 Venue: ${game.venue.label}
+📍 Venue: ${venueName}
 🎮 Level: ${game.level}
 👥 Available spots: ${availableSpots}/4
 
@@ -89,15 +90,21 @@ Players:
 ${game.players?.map((p, i) => `${['1️⃣', '2️⃣', '3️⃣', '4️⃣'][i]} ${p.name}`).join('\n')}`;
 }
 
-export function formatPlayerJoinedMessage(
-  game: Game,
-  player: Player,
-  baseUrl: string
-): string {
+export function formatUpcomingGameForTelegram(game: Game): string {
   const date = format(new Date(game.dateTime), 'PPP');
   const time = format(new Date(game.dateTime), 'HH:mm');
   const availableSpots = 4 - (game.players?.length || 0);
-  const gameUrl = `${baseUrl}/games/${game.id}`;
+  const venueName = JSON.parse(game?.venue.toString()).label;
+  const joinUrl = `${process.env.PROD_API_URL}?id=${game.id}`;
+
+  return `<a href="${joinUrl}">${date} - ${time} | ${venueName} | ${game.level} | ${availableSpots}/4</a>`;
+}
+
+export function formatPlayerJoinedMessage(game: Game, player: Player): string {
+  const date = format(new Date(game.dateTime), 'PPP');
+  const time = format(new Date(game.dateTime), 'HH:mm');
+  const availableSpots = 4 - (game.players?.length || 0);
+  const gameUrl = `${process.env.PROD_API_URL}/games/${game.id}`;
 
   const venueName = JSON.parse(game?.venue.toString()).label;
   console.log('Formatting player joined message:', game, venueName);

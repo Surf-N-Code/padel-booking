@@ -48,13 +48,10 @@ export async function POST(request: Request) {
     };
 
     // Send general notification to main channel
-    await sendTelegramMessage(
-      formatGameForTelegram(gameForNotification, baseUrl),
-      {
-        text: 'Open game',
-        url: `${process.env.PROD_API_URL}?id=${game.id}`,
-      }
-    );
+    await sendTelegramMessage(formatGameForTelegram(gameForNotification), {
+      text: 'Open game',
+      url: `${process.env.PROD_API_URL}?id=${game.id}`,
+    });
 
     // Get all users
     const userEmails = await redis.smembers('users');
