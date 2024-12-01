@@ -1,7 +1,9 @@
 import { redis } from '@/lib/redis';
 import { NextResponse } from 'next/server';
+import { formatGameForTelegram, sendTelegramMessage } from '@/lib/telegram';
+import { headers } from 'next/headers';
 import { addDays } from 'date-fns';
-import type { Game } from '@/types/game';
+import { Game } from '@/types/game';
 
 export async function POST(request: Request) {
   try {
@@ -14,14 +16,14 @@ export async function POST(request: Request) {
       level: data.level,
       venue: JSON.stringify(data.venue),
       createdAt: new Date().toISOString(),
-      createdBy: data.createdBy || 'anonymous', // Replace when auth is added
+      createdBy: data.createdBy || 'anonymous',
     };
 
     // Store game data in hash
     await redis.hset(`game:${id}`, game);
 
     // Add to sorted set for date-based queries
-    await redis.zadd('games:by:date', Date.parse(game.dateTime!), game.id!);
+    await redis.zadd('games:by:date', Date.parse(game.dateTime), game.id);
 
     // Add initial players if any
     if (data.players?.length) {
@@ -30,6 +32,24 @@ export async function POST(request: Request) {
         data.players.map((p: any) => JSON.stringify(p))
       );
     }
+
+    // Send Telegram notification
+    const headersList = await headers();
+    const host = headersList.get('host');
+    const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
+    const baseUrl = `${protocol}://${host}`;
+
+    await sendTelegramMessage(
+      formatGameForTelegram(
+        {
+          ...game,
+          venue: JSON.parse(game.venue),
+          players: data.players || [],
+          location: JSON.parse(game.venue).addressLines,
+        },
+        baseUrl
+      )
+    );
 
     return NextResponse.json({ game });
   } catch (error) {

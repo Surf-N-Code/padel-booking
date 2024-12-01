@@ -1,5 +1,11 @@
 # Features
 
+## Telegram
+
+- List upcoming games with open slots with links to join the game
+- Add game link
+- Get notified on Telegram when player joins the game
+
 ## Authentifizierung
 
 Login/Register

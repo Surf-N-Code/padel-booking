@@ -1,5 +1,8 @@
 import { redis } from '@/lib/redis';
 import { NextRequest, NextResponse } from 'next/server';
+import { formatPlayerJoinedMessage, sendTelegramMessage } from '@/lib/telegram';
+import { headers } from 'next/headers';
+import { Game } from '@/types/game';
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,9 +24,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if game exists
-    const gameExists = await redis.exists(`game:${gameId}`);
-    if (!gameExists) {
+    // Check if game exists and get game data
+    const gameData = await redis.hgetall(`game:${gameId}`);
+    if (!gameData) {
       return NextResponse.json({ error: 'Game not found' }, { status: 404 });
     }
 
@@ -35,6 +38,20 @@ export async function POST(req: NextRequest) {
 
     // Add player to game
     await redis.sadd(`game:${gameId}:players`, JSON.stringify(player));
+
+    // Send Telegram notification
+    const headersList = await headers();
+    const host = headersList.get('host');
+    const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
+    const baseUrl = `${protocol}://${host}`;
+
+    //@ts-ignore
+    const game: Game = {
+      ...gameData,
+      players: [...currentPlayers.map((p) => JSON.parse(p)), player],
+    };
+
+    await sendTelegramMessage(formatPlayerJoinedMessage(game, player, baseUrl));
 
     return NextResponse.json({ success: true });
   } catch (error) {
