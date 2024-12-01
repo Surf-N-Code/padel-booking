@@ -30,6 +30,22 @@ import {
 import { GAME_LEVELS } from '@/types/game';
 import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Venue } from '@/types/game';
+import { cn } from '@/lib/utils';
 
 const profileFormSchema = z
   .object({
@@ -38,6 +54,7 @@ const profileFormSchema = z
     currentPassword: z.string().nullish(),
     newPassword: z.string().nullish(),
     padelLevel: z.string(),
+    favoriteVenues: z.array(z.string()),
   })
   .refine(
     (data) => {
@@ -57,6 +74,16 @@ export default function ProfilePage() {
   const { data: session, update } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const { data: venues = [] } = useQuery<Venue[]>({
+    queryKey: ['venues'],
+    queryFn: async () => {
+      const res = await fetch('/api/venues');
+      if (!res.ok) throw new Error('Failed to fetch venues');
+      return res.json();
+    },
+  });
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -64,6 +91,7 @@ export default function ProfilePage() {
       name: '',
       email: session?.user?.email || '',
       padelLevel: 'mixed',
+      favoriteVenues: [],
     },
   });
 
@@ -79,6 +107,7 @@ export default function ProfilePage() {
             padelLevel: userData.padelLevel || 'mixed',
             currentPassword: '',
             newPassword: '',
+            favoriteVenues: userData.favoriteVenues || [],
           });
         }
       } catch (error) {
@@ -235,6 +264,66 @@ export default function ProfilePage() {
                         ))}
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="favoriteVenues"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Favorite Venues</FormLabel>
+                    <Popover open={open} onOpenChange={setOpen}>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={open}
+                            className="w-full justify-between"
+                          >
+                            {field.value.length > 0
+                              ? `${field.value.length} venues selected`
+                              : 'Select favorite venues'}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Search venues..." />
+                          <CommandEmpty>No venue found.</CommandEmpty>
+                          <CommandGroup className="max-h-64 overflow-auto">
+                            {venues.map((venue) => (
+                              <CommandItem
+                                key={venue.id}
+                                onSelect={() => {
+                                  const values = new Set(field.value);
+                                  if (values.has(venue.id)) {
+                                    values.delete(venue.id);
+                                  } else {
+                                    values.add(venue.id);
+                                  }
+                                  field.onChange(Array.from(values));
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    'mr-2 h-4 w-4',
+                                    field.value.includes(venue.id)
+                                      ? 'opacity-100'
+                                      : 'opacity-0'
+                                  )}
+                                />
+                                {venue.label}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}

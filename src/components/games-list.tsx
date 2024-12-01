@@ -4,9 +4,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { format } from 'date-fns';
 import { Button } from './ui/button';
-import { UserPlus, UserMinus, MapPin } from 'lucide-react';
+import { UserPlus, UserMinus, MapPin, Star } from 'lucide-react';
 import type { Game, Player, Venue } from '@/types/game';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
@@ -55,10 +55,7 @@ export function GamesList() {
       if (!session?.user) return null;
       const res = await fetch('/api/user/profile');
       if (!res.ok) throw new Error('Failed to fetch user profile');
-      const data = await res.json();
-      console.log('data', data);
-      setPlayerNames(data?.name);
-      return data;
+      return res.json();
     },
     enabled: !!session?.user,
   });
@@ -94,6 +91,19 @@ export function GamesList() {
   const uniqueVenues = Array.from(
     new Set(games.map((game) => game.venue))
   ).sort((a: Venue, b: Venue) => a.label.localeCompare(b.label));
+
+  // Sort venues with favorites at top
+  const sortedVenues = useMemo(() => {
+    if (!uniqueVenues || !userProfile?.favoriteVenues) return uniqueVenues;
+
+    return [...uniqueVenues].sort((a, b) => {
+      const aIsFavorite = userProfile.favoriteVenues.includes(a.id);
+      const bIsFavorite = userProfile.favoriteVenues.includes(b.id);
+      if (aIsFavorite && !bIsFavorite) return -1;
+      if (!aIsFavorite && bIsFavorite) return 1;
+      return a.label.localeCompare(b.label);
+    });
+  }, [uniqueVenues, userProfile?.favoriteVenues]);
 
   // Filter games based on availability and selected venue
   const filteredGames = games.filter(
@@ -297,7 +307,7 @@ export function GamesList() {
               >
                 <span className="truncate">
                   {selectedVenue
-                    ? uniqueVenues.find(
+                    ? sortedVenues.find(
                         (venue) => venue.label === selectedVenue
                       )?.label
                     : 'Filter by venue'}
@@ -309,7 +319,6 @@ export function GamesList() {
               <Command>
                 <CommandInput placeholder="Search venue..." />
                 <CommandList>
-                  {' '}
                   <CommandEmpty>No venue found.</CommandEmpty>
                   <CommandGroup>
                     <CommandItem
@@ -326,7 +335,7 @@ export function GamesList() {
                       />
                       All venues
                     </CommandItem>
-                    {uniqueVenues.map((venue) => (
+                    {sortedVenues.map((venue) => (
                       <CommandItem
                         key={venue.id}
                         onSelect={() => {
@@ -335,15 +344,20 @@ export function GamesList() {
                         }}
                         className="truncate"
                       >
-                        <Check
-                          className={cn(
-                            'mr-2 h-4 w-4',
-                            selectedVenue === venue.label
-                              ? 'opacity-100'
-                              : 'opacity-0'
+                        <div className="flex items-center gap-2">
+                          <Check
+                            className={cn(
+                              'mr-2 h-4 w-4',
+                              selectedVenue === venue.label
+                                ? 'opacity-100'
+                                : 'opacity-0'
+                            )}
+                          />
+                          {userProfile?.favoriteVenues?.includes(venue.id) && (
+                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                           )}
-                        />
-                        <span className="truncate">{venue.label}</span>
+                          <span className="truncate">{venue.label}</span>
+                        </div>
                       </CommandItem>
                     ))}
                   </CommandGroup>

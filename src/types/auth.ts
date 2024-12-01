@@ -5,6 +5,7 @@ export interface User {
   createdAt: string;
   name?: string;
   padelLevel?: string;
+  favoriteVenues?: string[];
 }
 
 export interface Session {
