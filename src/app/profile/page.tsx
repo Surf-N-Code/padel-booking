@@ -55,17 +55,26 @@ const profileFormSchema = z
   .object({
     name: z.string().min(2, 'Name must be at least 2 characters'),
     email: z.string().email(),
-    currentPassword: z.string().optional().default(''),
-    newPassword: z.string().min(6).optional().default(''),
+    currentPassword: z.string().optional(),
+    newPassword: z.string().optional(),
     padelLevel: z.string(),
     favoriteVenues: z.array(z.string()),
   })
   .refine(
     (data) => {
+      // If neither password field is filled, it's valid
       if (!data.currentPassword && !data.newPassword) return true;
-      return (
-        data.currentPassword && data.newPassword && data.newPassword.length >= 6
-      );
+
+      // If one is filled, both must be filled and new password must be 6+ chars
+      if (data.currentPassword || data.newPassword) {
+        return (
+          data.currentPassword &&
+          data.newPassword &&
+          data.newPassword.length >= 6
+        );
+      }
+
+      return true;
     },
     {
       message:
