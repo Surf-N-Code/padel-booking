@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/select';
 import { GAME_LEVELS } from '@/types/game';
 import { useSession } from 'next-auth/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -42,6 +42,7 @@ const profileFormSchema = z.object({
 export default function ProfilePage() {
   const { data: session, update } = useSession();
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -51,6 +52,32 @@ export default function ProfilePage() {
       padelLevel: 'mixed',
     },
   });
+
+  useEffect(() => {
+    async function fetchUserData() {
+      try {
+        const response = await fetch('/api/user/profile');
+        if (response.ok) {
+          const userData = await response.json();
+          form.reset({
+            name: userData.name || '',
+            email: userData.email || '',
+            padelLevel: userData.padelLevel || 'mixed',
+            currentPassword: '',
+            newPassword: '',
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setIsInitialized(true);
+      }
+    }
+
+    if (session?.user && !isInitialized) {
+      fetchUserData();
+    }
+  }, [session, form, isInitialized]);
 
   async function onSubmit(values: z.infer<typeof profileFormSchema>) {
     try {
@@ -69,12 +96,26 @@ export default function ProfilePage() {
 
       const data = await response.json();
       await update(data);
-      form.reset(values);
+      form.reset({
+        ...values,
+        currentPassword: '',
+        newPassword: '',
+      });
     } catch (error) {
       console.error('Profile update error:', error);
     } finally {
       setIsLoading(false);
     }
+  }
+
+  if (!isInitialized) {
+    return (
+      <div className="container max-w-2xl py-10">
+        <Card>
+          <CardContent className="p-6">Loading...</CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
