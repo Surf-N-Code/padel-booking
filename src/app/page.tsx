@@ -7,8 +7,9 @@ interface Props {
   searchParams: { id?: string };
 }
 
-export default function Home({ searchParams }: Props) {
-  const gameId = searchParams.id;
+export default async function Home({ searchParams }: Props) {
+  const param = await searchParams;
+  const gameId = param.id;
 
   return (
     <main className="container mx-auto py-10">
