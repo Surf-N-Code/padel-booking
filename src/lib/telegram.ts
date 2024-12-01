@@ -4,7 +4,10 @@ import { format } from 'date-fns';
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-export async function sendTelegramMessage(text: string) {
+export async function sendTelegramMessage(
+  text: string,
+  replyMarkup?: { text: string; url: string }
+) {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
     console.warn('Telegram credentials not configured');
     return;
@@ -14,7 +17,20 @@ export async function sendTelegramMessage(text: string) {
     text,
     parse_mode: 'HTML',
     disable_web_page_preview: true,
+    ...(replyMarkup && {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: replyMarkup.text,
+              url: replyMarkup.url,
+            },
+          ],
+        ],
+      },
+    }),
   });
+  console.log('Reply markup:', replyMarkup);
   try {
     const response = await fetch(
       `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
@@ -26,16 +42,26 @@ export async function sendTelegramMessage(text: string) {
         body: JSON.stringify({
           chat_id: TELEGRAM_CHAT_ID,
           text,
-          parse_mode: 'HTML',
+          //   parse_mode: 'HTML',
           disable_web_page_preview: true,
+          ...(replyMarkup && {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: replyMarkup.text,
+                    url: replyMarkup.url,
+                  },
+                ],
+              ],
+            },
+          }),
         }),
       }
     );
 
-    console.log('Telegram response:', response);
-
     if (!response.ok) {
-      throw new Error('Failed to send Telegram message');
+      throw new Error(await response.text());
     }
 
     return response.json();
@@ -51,6 +77,7 @@ export function formatGameForTelegram(game: Game, baseUrl: string): string {
   const joinUrl = `${baseUrl}/games/${game.id}`;
 
   return `
+----------------------------
 🎾 <b>New Padel Game</b>
 
 📅 Date: ${date}
@@ -60,10 +87,7 @@ export function formatGameForTelegram(game: Game, baseUrl: string): string {
 👥 Available spots: ${availableSpots}/4
 
 Players:
-${game.players?.map((p, i) => `${['1️⃣', '2️⃣', '3️⃣', '4️⃣'][i]} ${p.name}`).join('\n')}
-
-<a href="${joinUrl}">Join Game</a>
-`;
+${game.players?.map((p, i) => `${['1️⃣', '2️⃣', '3️⃣', '4️⃣'][i]} ${p.name}`).join('\n')}`;
 }
 
 export function formatPlayerJoinedMessage(
@@ -88,8 +112,5 @@ ${player.name} joined the game on ${date} at ${time}
 👥 Available spots: ${availableSpots}/4
 
 Current players:
-${game.players?.map((p) => `• ${p.name}`).join('\n')}
-
-<a href="${gameUrl}">View Game</a>
-`;
+${game.players?.map((p) => `• ${p.name}`).join('\n')}`;
 }

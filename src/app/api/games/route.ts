@@ -33,23 +33,49 @@ export async function POST(request: Request) {
       );
     }
 
-    // Send Telegram notification
+    // Get base URL for notifications
     const headersList = await headers();
     const host = headersList.get('host');
     const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
     const baseUrl = `${protocol}://${host}`;
 
+    // Format game data for notifications
+    const gameForNotification = {
+      ...game,
+      venue: JSON.parse(game.venue),
+      players: data.players || [],
+      location: JSON.parse(game.venue).addressLines,
+    };
+
+    // Send general notification to main channel
     await sendTelegramMessage(
-      formatGameForTelegram(
-        {
-          ...game,
-          venue: JSON.parse(game.venue),
-          players: data.players || [],
-          location: JSON.parse(game.venue).addressLines,
-        },
-        baseUrl
-      )
+      formatGameForTelegram(gameForNotification, baseUrl),
+      {
+        text: 'Open game',
+        url: `${process.env.PROD_API_URL}/game/${game.id}`,
+      }
     );
+
+    // Get all users
+    const userEmails = await redis.smembers('users');
+
+    // Find users who have favorited this venue
+    const usersWithFavorites = await Promise.all(
+      userEmails.map(async (email) => {
+        const userJson = await redis.get(`user:${email}`);
+        if (!userJson) return null;
+        const user = JSON.parse(userJson);
+        return user.favoriteVenues?.includes(data.venue.id) ? user : null;
+      })
+    );
+
+    // Filter out null values and send notifications
+    const interestedUsers = usersWithFavorites.filter(Boolean);
+    if (interestedUsers.length > 0) {
+      const venueNotification = `${formatGameForTelegram(gameForNotification, baseUrl)}
+`;
+      await sendTelegramMessage(venueNotification);
+    }
 
     return NextResponse.json({ game });
   } catch (error) {
@@ -70,8 +96,6 @@ export async function GET() {
       now,
       addDays(new Date(), 60).getTime()
     );
-
-    console.log('Found game IDs:', gameIds);
 
     // Get game details and scores for each ID
     const games = await Promise.all(
@@ -99,7 +123,6 @@ export async function GET() {
       (a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()
     );
 
-    console.log('Final games data:', sortedGames);
     return NextResponse.json(sortedGames);
   } catch (error) {
     console.error('Failed to fetch games:', error);
