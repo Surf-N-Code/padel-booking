@@ -36,6 +36,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandList,
 } from '@/components/ui/command';
 import {
   Popover,
@@ -46,6 +47,7 @@ import { Check, ChevronsUpDown } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Venue } from '@/types/game';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const profileFormSchema = z
   .object({
@@ -291,36 +293,49 @@ export default function ProfilePage() {
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
-                      <PopoverContent className="w-full p-0" align="start">
+                      <PopoverContent className="w-[300px] p-0">
                         <Command>
                           <CommandInput placeholder="Search venues..." />
-                          <CommandEmpty>No venue found.</CommandEmpty>
-                          <CommandGroup className="max-h-64 overflow-auto">
-                            {venues.map((venue) => (
-                              <CommandItem
-                                key={venue.id}
-                                onSelect={() => {
-                                  const values = new Set(field.value);
-                                  if (values.has(venue.id)) {
-                                    values.delete(venue.id);
-                                  } else {
-                                    values.add(venue.id);
-                                  }
-                                  field.onChange(Array.from(values));
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    'mr-2 h-4 w-4',
-                                    field.value.includes(venue.id)
-                                      ? 'opacity-100'
-                                      : 'opacity-0'
-                                  )}
-                                />
-                                {venue.label}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
+                          <CommandList>
+                            <CommandEmpty>No venue found.</CommandEmpty>
+                            <ScrollArea className="h-[200px]">
+                              <CommandGroup>
+                                {venues.map((venue) => (
+                                  <CommandItem
+                                    key={venue.id}
+                                    onSelect={() => {
+                                      const values = new Set(field.value);
+                                      if (values.has(venue.id)) {
+                                        values.delete(venue.id);
+                                      } else {
+                                        values.add(venue.id);
+                                      }
+                                      field.onChange(Array.from(values));
+                                    }}
+                                  >
+                                    <div className="flex items-center gap-2 w-full">
+                                      <Check
+                                        className={cn(
+                                          'mr-2 h-4 w-4',
+                                          field.value.includes(venue.id)
+                                            ? 'opacity-100'
+                                            : 'opacity-0'
+                                        )}
+                                      />
+                                      <div className="flex flex-col">
+                                        <span className="font-medium">
+                                          {venue.label}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">
+                                          {venue.addressLines}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </ScrollArea>
+                          </CommandList>
                         </Command>
                       </PopoverContent>
                     </Popover>

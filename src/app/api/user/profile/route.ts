@@ -37,7 +37,14 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json();
-    const { name, email, currentPassword, newPassword, padelLevel } = body;
+    const {
+      name,
+      email,
+      currentPassword,
+      newPassword,
+      padelLevel,
+      favoriteVenues,
+    } = body;
 
     // Get current user
     const userJson = await redis.get(`user:${session.user.email}`);
@@ -67,6 +74,7 @@ export async function PUT(req: Request) {
       ...user,
       name: name || user.name,
       padelLevel: padelLevel || user.padelLevel,
+      favoriteVenues: favoriteVenues || user.favoriteVenues,
     };
 
     // If email is changing, need to update Redis keys
