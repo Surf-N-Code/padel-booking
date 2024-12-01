@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/select';
 import { GAME_LEVELS } from '@/types/game';
 import { useSession } from 'next-auth/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Command,
   CommandEmpty,
@@ -37,8 +37,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Check, ChevronsUpDown } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Check, ChevronsUpDown, Star } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Venue } from '@/types/game';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -88,7 +88,21 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [open, setOpen] = useState(false);
+  const queryClient = useQueryClient();
 
+  // Fetch user profile
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile'],
+    queryFn: async () => {
+      if (!session?.user) return null;
+      const res = await fetch('/api/user/profile');
+      if (!res.ok) throw new Error('Failed to fetch user profile');
+      return res.json();
+    },
+    enabled: !!session?.user,
+  });
+
+  // Fetch venues
   const { data: venues = [] } = useQuery<Venue[]>({
     queryKey: ['venues'],
     queryFn: async () => {
@@ -108,32 +122,20 @@ export default function ProfilePage() {
     },
   });
 
+  // Update form values when user profile is loaded
   useEffect(() => {
-    async function fetchUserData() {
-      try {
-        const response = await fetch('/api/user/profile');
-        if (response.ok) {
-          const userData = await response.json();
-          form.reset({
-            name: userData.name || '',
-            email: userData.email || '',
-            padelLevel: userData.padelLevel || 'mixed',
-            currentPassword: '',
-            newPassword: '',
-            favoriteVenues: userData.favoriteVenues || [],
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      } finally {
-        setIsInitialized(true);
-      }
+    if (userProfile && !isInitialized) {
+      form.reset({
+        name: userProfile.name || '',
+        email: userProfile.email || '',
+        padelLevel: userProfile.padelLevel || 'mixed',
+        favoriteVenues: userProfile.favoriteVenues || [],
+        currentPassword: '',
+        newPassword: '',
+      });
+      setIsInitialized(true);
     }
-
-    if (session?.user && !isInitialized) {
-      fetchUserData();
-    }
-  }, [session, form, isInitialized]);
+  }, [userProfile, form, isInitialized]);
 
   async function onSubmit(values: z.infer<typeof profileFormSchema>) {
     try {
@@ -152,8 +154,14 @@ export default function ProfilePage() {
 
       const data = await response.json();
       await update(data);
+
+      // Invalidate queries and reset form
+      await queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+      setIsInitialized(false); // Force re-initialization with new data
+
       form.reset({
         ...values,
+        favoriteVenues: values.favoriteVenues, // Explicitly set favoriteVenues
         currentPassword: '',
         newPassword: '',
       });
@@ -163,6 +171,20 @@ export default function ProfilePage() {
       setIsLoading(false);
     }
   }
+
+  // Sort venues with favorites at top
+  const sortedVenues = useMemo(() => {
+    if (!venues || !form.getValues('favoriteVenues')) return venues;
+
+    return [...venues].sort((a, b) => {
+      const currentFavorites = form.getValues('favoriteVenues');
+      const aIsFavorite = currentFavorites.includes(a.id);
+      const bIsFavorite = currentFavorites.includes(b.id);
+      if (aIsFavorite && !bIsFavorite) return -1;
+      if (!aIsFavorite && bIsFavorite) return 1;
+      return a.label.localeCompare(b.label);
+    });
+  }, [venues, form.watch('favoriteVenues')]); // Watch favoriteVenues changes
 
   if (!isInitialized) {
     return (
@@ -315,12 +337,11 @@ export default function ProfilePage() {
                     </PopoverTrigger>
                     <PopoverContent className="w-[300px] p-0">
                       <Command>
-                        <CommandInput placeholder="Search venues..." />
                         <CommandList>
-                          <CommandEmpty>No venue found.</CommandEmpty>
+                          <CommandInput placeholder="Search venues..." />
                           <ScrollArea className="h-[200px]">
                             <CommandGroup>
-                              {venues.map((venue) => (
+                              {sortedVenues?.map((venue) => (
                                 <CommandItem
                                   key={venue.id}
                                   onSelect={() => {
@@ -342,6 +363,9 @@ export default function ProfilePage() {
                                           : 'opacity-0'
                                       )}
                                     />
+                                    {field.value.includes(venue.id) && (
+                                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                    )}
                                     <div className="flex flex-col">
                                       <span className="font-medium">
                                         {venue.label}
