@@ -75,7 +75,8 @@ export function formatGameForTelegram(game: Game): string {
   const time = format(new Date(game.dateTime), 'HH:mm');
   const availableSpots = 4 - (game.players?.length || 0);
   const joinUrl = `${process.env.PROD_API_URL}?id=${game.id}`;
-  const venueName = JSON.parse(game?.venue.toString()).label;
+  console.log('Formatting game for Telegram:', game);
+  const venueName = game?.venue?.label;
 
   return `
 🎾 New Padel Game

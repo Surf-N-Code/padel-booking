@@ -29,8 +29,10 @@ export default function RootLayout({
       >
         <AuthProvider>
           <Providers>
-            <NavBar />
-            {children}
+            <div className="px-4">
+              <NavBar />
+              <main className="px-4 mx-auto">{children}</main>
+            </div>
           </Providers>
         </AuthProvider>
       </body>

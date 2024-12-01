@@ -47,12 +47,6 @@ export async function POST(request: Request) {
       location: JSON.parse(game.venue).addressLines,
     };
 
-    // Send general notification to main channel
-    await sendTelegramMessage(formatGameForTelegram(gameForNotification), {
-      text: 'Open game',
-      url: `${process.env.PROD_API_URL}?id=${game.id}`,
-    });
-
     // Get all users
     const userEmails = await redis.smembers('users');
 
@@ -71,7 +65,10 @@ export async function POST(request: Request) {
     if (interestedUsers.length > 0) {
       const venueNotification = `${formatGameForTelegram(gameForNotification)}
 `;
-      await sendTelegramMessage(venueNotification);
+      await sendTelegramMessage(venueNotification, {
+        text: 'Open game',
+        url: `${process.env.PROD_API_URL}?id=${game.id}`,
+      });
     }
 
     return NextResponse.json({ game });

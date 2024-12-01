@@ -3,8 +3,12 @@ import { NextResponse } from 'next/server';
 import { addDays, format } from 'date-fns';
 import type { Game } from '@/types/game';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // Extract game ID from URL if present
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
+
     const now = new Date().getTime();
     const gameIds = await redis.zrangebyscore(
       'games:by:date',
