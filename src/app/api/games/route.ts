@@ -48,7 +48,7 @@ export async function GET() {
     const gameIds = await redis.zrangebyscore(
       'games:by:date',
       now,
-      addDays(new Date(), 14).getTime()
+      addDays(new Date(), 60).getTime()
     );
 
     console.log('Found game IDs:', gameIds);
