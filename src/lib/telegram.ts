@@ -77,7 +77,6 @@ export function formatGameForTelegram(game: Game, baseUrl: string): string {
   const joinUrl = `${baseUrl}/games/${game.id}`;
 
   return `
-----------------------------
 🎾 New Padel Game
 
 📅 Date: ${date}
@@ -103,7 +102,6 @@ export function formatPlayerJoinedMessage(
   const venueName = JSON.parse(game?.venue.toString()).label;
   console.log('Formatting player joined message:', game, venueName);
   return `
-----------------------------
 👋 New Player Joined!
 
 ${player.name} joined the game on ${date} at ${time}
