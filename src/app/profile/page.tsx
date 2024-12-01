@@ -13,10 +13,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-} from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -58,8 +55,8 @@ const profileFormSchema = z
   .object({
     name: z.string().min(2, 'Name must be at least 2 characters'),
     email: z.string().email(),
-    currentPassword: z.string().nullish(),
-    newPassword: z.string().nullish(),
+    currentPassword: z.string().optional().default(''),
+    newPassword: z.string().min(6).optional().default(''),
     padelLevel: z.string(),
     favoriteVenues: z.array(z.string()),
   })

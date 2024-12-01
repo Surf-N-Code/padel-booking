@@ -122,10 +122,11 @@ export function GamesList() {
       playerName: string;
     }) => {
       setLoadingState({ gameId, type: 'join' });
-      const response = await fetch(`/api/games/${gameId}/join`, {
+      const response = await fetch(`/api/games/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          gameId,
           player: {
             id: crypto.randomUUID(),
             name: playerName || 'Anonymous Player',
@@ -177,11 +178,11 @@ export function GamesList() {
         }));
       }
     },
-    onSuccess: (_, gameId) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['games'] });
       setPlayerNames((prev) => ({
         ...prev,
-        [gameId]: '',
+        [variables.gameId]: '',
       }));
     },
     onSettled: () => {
@@ -198,10 +199,10 @@ export function GamesList() {
       player: Player;
     }) => {
       setLoadingState({ gameId, playerId: player.id, type: 'leave' });
-      const response = await fetch(`/api/games/${gameId}/leave`, {
+      const response = await fetch(`/api/games/leave`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ player }),
+        body: JSON.stringify({ gameId, player }),
       });
       if (!response.ok) throw new Error('Failed to leave game');
       return response.json();

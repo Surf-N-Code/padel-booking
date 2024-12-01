@@ -75,8 +75,8 @@ const scrapeVenues = async () => {
 
       const addressLines = addressContent
         .split(/<br\/?>/g)
-        .map((line) => line.trim().replace('<br />', ''))
-        .filter((line) => line);
+        .map((line: string) => line.trim().replace('<br />', ''))
+        .filter((line: string) => line);
 
       if (name) {
         extractedLocations.push({ name, link, addressLines });
