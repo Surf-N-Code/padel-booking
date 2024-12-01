@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 import { LEVEL_BADGES } from '@/lib/const';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 type LoadingState = {
   gameId: string;
@@ -44,6 +45,7 @@ const sortPlayers = (players: Player[] = []) => {
 };
 
 export function GamesList({ gameId }: GamesListProps) {
+  const router = useRouter();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const [playerNames, setPlayerNames] = useState<Record<string, string>>({});
@@ -272,6 +274,14 @@ export function GamesList({ gameId }: GamesListProps) {
     );
   };
 
+  const handleAddPlayer = (gameId: string) => {
+    if (!session) {
+      router.push('/login');
+      return;
+    }
+    handleSavePlayers(gameId);
+  };
+
   if (isLoading)
     return (
       <div className="flex flex-col space-y-3">
@@ -444,14 +454,14 @@ export function GamesList({ gameId }: GamesListProps) {
                                 getDefaultPlayerName(game.id)
                               ) {
                                 e.preventDefault();
-                                handleSavePlayers(game.id);
+                                handleAddPlayer(game.id);
                               }
                             }}
                           />
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleSavePlayers(game.id)}
+                            onClick={() => handleAddPlayer(game.id)}
                             disabled={isButtonLoading(game.id, 'join')}
                           >
                             <UserPlus className="h-4 w-4" />
