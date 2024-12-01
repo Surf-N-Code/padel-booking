@@ -55,15 +55,27 @@ export function GamesList() {
       if (!session?.user) return null;
       const res = await fetch('/api/user/profile');
       if (!res.ok) throw new Error('Failed to fetch user profile');
-      return res.json();
+      const data = await res.json();
+      console.log('data', data);
+      setPlayerNames(data?.name);
+      return data;
     },
     enabled: !!session?.user,
   });
 
   // Pre-populate name field when joining a new game
   const getDefaultPlayerName = (gameId: string) => {
-    return playerNames[gameId] || userProfile?.name || '';
+    return playerNames[gameId] !== undefined
+      ? playerNames[gameId]
+      : userProfile?.name || '';
   };
+
+  // Initialize playerNames with profile name when profile is loaded
+  useEffect(() => {
+    if (userProfile?.name && Object.keys(playerNames).length === 0) {
+      setPlayerNames({});
+    }
+  }, [userProfile]);
 
   const {
     data: games = [],
@@ -216,7 +228,7 @@ export function GamesList() {
     try {
       await joinGame.mutate({
         gameId,
-        playerName: playerNames[gameId],
+        playerName: getDefaultPlayerName(gameId),
       });
     } catch (error) {
       console.error('Failed to join game:', error);
