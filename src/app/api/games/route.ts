@@ -69,7 +69,7 @@ export async function POST(request: Request) {
     // Filter out null values and send notifications
     const interestedUsers = usersWithFavorites.filter(Boolean);
     if (interestedUsers.length > 0) {
-      const venueNotification = `${formatGameForTelegram(gameForNotification, baseUrl)}
+      const venueNotification = `${formatGameForTelegram(gameForNotification)}
 `;
       await sendTelegramMessage(venueNotification);
     }
