@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import { Button } from './ui/button';
 import { UserPlus, UserMinus, MapPin } from 'lucide-react';
 import type { Game, Player, Venue } from '@/types/game';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
@@ -27,6 +27,7 @@ import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 import { LEVEL_BADGES } from '@/lib/const';
+import { useSession } from 'next-auth/react';
 
 type LoadingState = {
   gameId: string;
@@ -39,12 +40,30 @@ const sortPlayers = (players: Player[] = []) => {
 };
 
 export function GamesList() {
+  const { data: session } = useSession();
   const queryClient = useQueryClient();
   const [playerNames, setPlayerNames] = useState<Record<string, string>>({});
   const [loadingState, setLoadingState] = useState<LoadingState | null>(null);
   const [showAvailableOnly, setShowAvailableOnly] = useState(false);
   const [selectedVenue, setSelectedVenue] = useState<string>('');
   const [open, setOpen] = useState(false);
+
+  // Fetch user profile when component mounts
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile'],
+    queryFn: async () => {
+      if (!session?.user) return null;
+      const res = await fetch('/api/user/profile');
+      if (!res.ok) throw new Error('Failed to fetch user profile');
+      return res.json();
+    },
+    enabled: !!session?.user,
+  });
+
+  // Pre-populate name field when joining a new game
+  const getDefaultPlayerName = (gameId: string) => {
+    return playerNames[gameId] || userProfile?.name || '';
+  };
 
   const {
     data: games = [],
@@ -383,7 +402,7 @@ export function GamesList() {
                             type="text"
                             placeholder="Your name"
                             className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                            value={playerNames[game.id] || ''}
+                            value={getDefaultPlayerName(game.id)}
                             onChange={(e) =>
                               setPlayerNames((prev) => ({
                                 ...prev,
@@ -391,7 +410,10 @@ export function GamesList() {
                               }))
                             }
                             onKeyDown={(e) => {
-                              if (e.key === 'Enter' && playerNames[game.id]) {
+                              if (
+                                e.key === 'Enter' &&
+                                getDefaultPlayerName(game.id)
+                              ) {
                                 e.preventDefault();
                                 handleSavePlayers(game.id);
                               }
