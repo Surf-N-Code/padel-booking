@@ -3,6 +3,8 @@ export interface User {
   email: string;
   password: string;
   createdAt: string;
+  name?: string;
+  padelLevel?: string;
 }
 
 export interface Session {
