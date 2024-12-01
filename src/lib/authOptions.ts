@@ -39,6 +39,7 @@ export const authOptions: NextAuthOptions = {
           if (!passwordsMatch) return null;
 
           // Return sanitized user object with token
+          //@ts-ignore
           const { password: _, ...userWithoutPassword } = user;
           console.log('auth.ts: userWithoutPassword', userWithoutPassword);
           return userWithoutPassword;

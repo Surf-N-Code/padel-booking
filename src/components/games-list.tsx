@@ -72,6 +72,7 @@ export function GamesList() {
     if (userProfile?.name && Object.keys(playerNames).length === 0) {
       setPlayerNames({});
     }
+    //@ts-ignore
   }, [userProfile]);
 
   const {

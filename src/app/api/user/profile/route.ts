@@ -18,6 +18,7 @@ export async function GET() {
     }
 
     const user = JSON.parse(userJson) as User;
+    //@ts-expect-error
     const { password: _, ...sanitizedUser } = user;
     return NextResponse.json(sanitizedUser);
   } catch (error) {

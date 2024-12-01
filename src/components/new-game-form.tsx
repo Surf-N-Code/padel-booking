@@ -22,7 +22,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { GAME_LEVELS, Venue } from '@/types/game';
-import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { VenueCombobox } from './venue-combo-box';
@@ -31,7 +30,6 @@ import { formSchema } from '@/formSchema/newGame';
 
 export function NewGameForm() {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
 
   let {

@@ -28,8 +28,8 @@ export async function readPadelLocations(): Promise<PadelLocation[]> {
   try {
     const data = await fs.readFile(LOCATIONS_FILE, 'utf-8');
     return JSON.parse(data);
-  } catch (error) {
-    // Return empty array if file doesn't exist or is invalid
+  } catch (error: any) {
+    console.error('Error reading padel locations:', error);
     return [];
   }
 }

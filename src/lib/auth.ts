@@ -30,6 +30,7 @@ export const authOptions: NextAuthOptions = {
           if (!passwordsMatch) return null;
 
           // Return sanitized user object
+          //@ts-ignore
           const { password: _, ...userWithoutPassword } = user;
           return userWithoutPassword;
         } catch (error) {
