@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       formatGameForTelegram(gameForNotification, baseUrl),
       {
         text: 'Open game',
-        url: `${process.env.PROD_API_URL}/game/${game.id}`,
+        url: `${process.env.PROD_API_URL}/games/${game.id}`,
       }
     );
 
@@ -87,8 +87,35 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // Extract game ID from URL if present
+    const { searchParams } = new URL(request.url);
+    const gameId = searchParams.get('id');
+
+    if (gameId) {
+      // If game ID is provided, fetch just that game
+      const [gameData, dateTimeScore] = await Promise.all([
+        redis.hgetall(`game:${gameId}`),
+        redis.zscore('games:by:date', gameId),
+      ]);
+      const players = await redis.smembers(`game:${gameId}:players`);
+
+      if (!gameData || !dateTimeScore) {
+        return NextResponse.json({ error: 'Game not found' }, { status: 404 });
+      }
+
+      const game = {
+        ...gameData,
+        venue: JSON.parse(gameData.venue || '{}'),
+        id: gameId,
+        dateTime: new Date(parseInt(dateTimeScore)).toISOString(),
+        players: players.map((player) => JSON.parse(player)),
+      } as Game;
+
+      return NextResponse.json(game);
+    }
+
     // Get all game IDs from the sorted set for future games only
     const now = new Date().getTime();
     const gameIds = await redis.zrangebyscore(
