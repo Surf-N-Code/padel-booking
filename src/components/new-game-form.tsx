@@ -43,8 +43,6 @@ export function NewGameForm() {
     queryFn: fetchVenues,
   });
 
-  console.log('venues', venues);
-
   const form = useForm<z.infer<typeof formSchema>>({
     defaultValues: {
       date: new Date(),
@@ -60,12 +58,6 @@ export function NewGameForm() {
       players: ['', '', '', ''],
     },
   });
-
-  useEffect(() => {
-    if (venues && venues.length > 0 && !form.getValues('venue')) {
-      form.setValue('venue', venues[0]);
-    }
-  }, [venues, form]);
 
   const createGame = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {

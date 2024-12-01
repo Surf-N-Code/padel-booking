@@ -67,7 +67,6 @@ export function VenueCombobox({ form, venues, isLoading }: VenueComboboxProps) {
     });
   }, [venues, userProfile?.favoriteVenues]);
 
-  console.log('sortedVenues', sortedVenues, userProfile?.favoriteVenues);
   return (
     <FormField
       control={form.control}
