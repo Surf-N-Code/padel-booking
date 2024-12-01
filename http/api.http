@@ -1,0 +1,5 @@
+### /games
+GET http://localhost:3000/api/games
+
+### /telegram/games
+GET http://localhost:3000/api/telegram/games
