@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       formatGameForTelegram(gameForNotification, baseUrl),
       {
         text: 'Open game',
-        url: `${process.env.PROD_API_URL}/games/${game.id}`,
+        url: `${process.env.PROD_API_URL}/games?id=${game.id}`,
       }
     );
 

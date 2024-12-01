@@ -78,7 +78,7 @@ export function formatGameForTelegram(game: Game, baseUrl: string): string {
 
   return `
 ----------------------------
-🎾 <b>New Padel Game</b>
+🎾 New Padel Game
 
 📅 Date: ${date}
 ⏰ Time: ${time}
@@ -104,7 +104,7 @@ export function formatPlayerJoinedMessage(
   console.log('Formatting player joined message:', game, venueName);
   return `
 ----------------------------
-👋 <b>New Player Joined!</b>
+👋 New Player Joined!
 
 ${player.name} joined the game on ${date} at ${time}
 

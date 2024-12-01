@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
       formatPlayerJoinedMessage(game, player, baseUrl),
       {
         text: 'View Game',
-        url: `${process.env.PROD_API_URL}/games/${game.id}`,
+        url: `${process.env.PROD_API_URL}/games?id=${game.id}`,
       }
     );
 
