@@ -3,13 +3,13 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import Link from 'next/link';
 
-interface Props {
-  searchParams: { id?: string };
-}
+type Props = {
+  searchParams: Promise<{ [key: string]: string }>;
+};
 
 export default async function Home({ searchParams }: Props) {
-  const param = await searchParams;
-  const gameId = param.id;
+  const currSearchParams = await searchParams;
+  const gameId = currSearchParams.id;
 
   return (
     <main className="container mx-auto py-10">
