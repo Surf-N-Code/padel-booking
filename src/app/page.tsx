@@ -3,11 +3,19 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import Link from 'next/link';
 
-export default function Home() {
+interface Props {
+  searchParams: { id?: string };
+}
+
+export default function Home({ searchParams }: Props) {
+  const gameId = searchParams.id;
+
   return (
     <main className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Padel Games</h1>
+        <h1 className="text-3xl font-bold">
+          {gameId ? 'Game Details' : 'Padel Games'}
+        </h1>
         <Link href="/games/new">
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" />
@@ -15,7 +23,7 @@ export default function Home() {
           </Button>
         </Link>
       </div>
-      <GamesList />
+      <GamesList gameId={gameId} />
     </main>
   );
 }

@@ -35,11 +35,15 @@ type LoadingState = {
   playerId?: string;
 };
 
+interface GamesListProps {
+  gameId?: string;
+}
+
 const sortPlayers = (players: Player[] = []) => {
   return [...players].sort((a, b) => a.name.localeCompare(b.name));
 };
 
-export function GamesList() {
+export function GamesList({ gameId }: GamesListProps) {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const [playerNames, setPlayerNames] = useState<Record<string, string>>({});
@@ -72,7 +76,6 @@ export function GamesList() {
     if (userProfile?.name && Object.keys(playerNames).length === 0) {
       setPlayerNames({});
     }
-    //@ts-ignore
   }, [userProfile]);
 
   const {
@@ -80,11 +83,13 @@ export function GamesList() {
     isLoading,
     error,
   } = useQuery<Game[]>({
-    queryKey: ['games'],
+    queryKey: ['games', gameId],
     queryFn: async () => {
-      const res = await fetch('/api/games');
+      const url = gameId ? `/api/games?id=${gameId}` : '/api/games';
+      const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch games');
-      return res.json();
+      const data = await res.json();
+      return Array.isArray(data) ? data : [data];
     },
   });
 
@@ -286,89 +291,85 @@ export function GamesList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="available-games"
-            checked={showAvailableOnly}
-            onCheckedChange={setShowAvailableOnly}
-          />
-          <Label htmlFor="available-games">
-            Show only games with available spots
-          </Label>
-        </div>
+      {!gameId && (
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="show-available"
+              checked={showAvailableOnly}
+              onCheckedChange={setShowAvailableOnly}
+            />
+            <Label htmlFor="show-available">Show available only</Label>
+          </div>
 
-        <div className="w-[300px]">
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={open}
-                className="w-full justify-between truncate"
-              >
-                <span className="truncate">
-                  {selectedVenue
-                    ? sortedVenues.find(
-                        (venue) => venue.label === selectedVenue
-                      )?.label
-                    : 'Filter by venue'}
-                </span>
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[300px] p-0">
-              <Command>
-                <CommandInput placeholder="Search venue..." />
-                <CommandList>
-                  <CommandEmpty>No venue found.</CommandEmpty>
-                  <CommandGroup>
-                    <CommandItem
-                      onSelect={() => {
-                        setSelectedVenue('');
-                        setOpen(false);
-                      }}
-                    >
-                      <Check
-                        className={cn(
-                          'mr-2 h-4 w-4',
-                          !selectedVenue ? 'opacity-100' : 'opacity-0'
-                        )}
-                      />
-                      All venues
-                    </CommandItem>
-                    {sortedVenues.map((venue) => (
+          <div className="flex-1">
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className="justify-between w-[250px]"
+                >
+                  {selectedVenue || 'Filter by venue'}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[300px] p-0">
+                <Command>
+                  <CommandInput placeholder="Search venue..." />
+                  <CommandList>
+                    <CommandEmpty>No venue found.</CommandEmpty>
+                    <CommandGroup>
                       <CommandItem
-                        key={venue.id}
                         onSelect={() => {
-                          setSelectedVenue(venue.label);
+                          setSelectedVenue('');
                           setOpen(false);
                         }}
-                        className="truncate"
                       >
-                        <div className="flex items-center gap-2">
-                          <Check
-                            className={cn(
-                              'mr-2 h-4 w-4',
-                              selectedVenue === venue.label
-                                ? 'opacity-100'
-                                : 'opacity-0'
-                            )}
-                          />
-                          {userProfile?.favoriteVenues?.includes(venue.id) && (
-                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        <Check
+                          className={cn(
+                            'mr-2 h-4 w-4',
+                            !selectedVenue ? 'opacity-100' : 'opacity-0'
                           )}
-                          <span className="truncate">{venue.label}</span>
-                        </div>
+                        />
+                        All venues
                       </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+                      {sortedVenues.map((venue) => (
+                        <CommandItem
+                          key={venue.id}
+                          onSelect={() => {
+                            setSelectedVenue(venue.label);
+                            setOpen(false);
+                          }}
+                          className="truncate"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Check
+                              className={cn(
+                                'mr-2 h-4 w-4',
+                                selectedVenue === venue.label
+                                  ? 'opacity-100'
+                                  : 'opacity-0'
+                              )}
+                            />
+                            {userProfile?.favoriteVenues?.includes(
+                              venue.id
+                            ) && (
+                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                            )}
+                            <span className="truncate">{venue.label}</span>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
         {filteredGames.map((game) => (
