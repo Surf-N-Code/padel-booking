@@ -7,3 +7,36 @@ GET http://localhost:3000/api/telegram/games
 ### /telegram/upcoming
 GET http://localhost:3000/api/telegram/upcoming?telegramUserId=5057854535
 
+### /games
+POST http://localhost:3000/api/games
+content-type: application/json
+
+{
+    "dateTime": "2024-12-29T19:00:00.000Z",
+    "venue": {
+        "id": "padel-",
+        "label": "Padel",
+        "address": "Franz-Rennefeld-Weg 22 40472 Düsseldorf",
+        "link": "https://tc-kartause.de/padel-arena/"
+    },
+    "level": "mixed",
+    "players": []
+}
+
+### /games/join # phil
+POST http://localhost:3000/api/games/join
+content-type: application/json
+
+{
+    "gameId": "6e39661b-16e7-4788-96d0-a1f97d9d8765",
+    "player": { "id": "1", "name": "John Doe", "userId": "XzCNZnWeA0lPDj3Vwyjxs" }
+}
+
+### /games/join # anna
+POST http://localhost:3000/api/games/join
+content-type: application/json
+
+{
+    "gameId": "6e39661b-16e7-4788-96d0-a1f97d9d8765",
+    "player": { "id": "2", "name": "Anna", "userId": "QUTQeLApeH5KjzeJ8aOBy" }
+}

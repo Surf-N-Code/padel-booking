@@ -109,8 +109,7 @@ export function formatPlayerJoinedMessage(game: Game, player: Player): string {
   const availableSpots = 4 - (game.players?.length || 0);
   const gameUrl = `${process.env.APP_URL}/games/${game.id}`;
 
-  const venueName = JSON.parse(game?.venue.toString()).label;
-  console.log('Formatting player joined message:', game, venueName);
+  const venueName = game?.venue.label;
   return `
 👋 New Player Joined!
 

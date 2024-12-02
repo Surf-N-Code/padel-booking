@@ -4,9 +4,26 @@ import { formatGameForTelegram, sendTelegramMessage } from '@/lib/telegram';
 import { headers } from 'next/headers';
 import { addDays } from 'date-fns';
 import { Game } from '@/types/game';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
+import { User } from '@/types/auth';
 
 export async function POST(request: Request) {
   try {
+    let session;
+    if (process.env.NODE_ENV !== 'development') {
+      session = await getServerSession(authOptions);
+      if (!session?.user?.email) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+    } else {
+      session = {
+        user: {
+          email: 'test@test.com',
+        },
+      };
+    }
+
     const data = await request.json();
     const id = crypto.randomUUID();
 
@@ -17,7 +34,7 @@ export async function POST(request: Request) {
       venue: JSON.stringify(data.venue),
       createdAt: new Date().toISOString(),
       createdBy: data.createdBy || 'anonymous',
-      creatorEmail: data.creatorEmail || 'anonymous',
+      creatorEmail: session.user.email,
     };
 
     // Store game data in hash
@@ -42,14 +59,41 @@ export async function POST(request: Request) {
       location: JSON.parse(game.venue).addressLines,
     };
 
-    // Send notification about new game
-    const notification = formatGameForTelegram(gameForNotification);
-    //@TODO Telegram notification to all players who have this venue in their favourites
-    // const players = await redis.smembers(`user:${data.createdBy}:favourites`);
-    // await sendTelegramMessage(notification, 'HTML', {
-    //   text: 'View Game',
-    //   url: `${process.env.APP_URL}?id=${game.id}`,
-    // });
+    // Get all users
+    const users = await redis.smembers('users');
+
+    // Send notifications to users who have favorited this venue
+    await Promise.all(
+      users.map(async (userEmail) => {
+        const userJson = await redis.get(`user:${userEmail}`);
+        if (!userJson) return;
+
+        const user = JSON.parse(userJson) as User;
+        if (!user.telegramId || !user.favoriteVenues) return;
+
+        const hasVenueInFavorites = user.favoriteVenues.includes(data.venue.id);
+        if (!hasVenueInFavorites) return;
+
+        const gameWithParsedVenue = {
+          ...game,
+          id,
+          venue: data.venue,
+          players: [],
+        } as Game;
+
+        console.log('Sending notification to user', user.telegramId);
+
+        await sendTelegramMessage(
+          user.telegramId,
+          formatGameForTelegram(gameWithParsedVenue),
+          'HTML',
+          {
+            text: 'View Game',
+            url: `${process.env.APP_URL}?id=${id}`,
+          }
+        );
+      })
+    );
 
     return NextResponse.json({ game });
   } catch (error) {
