@@ -74,7 +74,7 @@ export function formatGameForTelegram(game: Game): string {
   const date = format(new Date(game.dateTime), 'PPP');
   const time = format(new Date(game.dateTime), 'HH:mm');
   const availableSpots = 4 - (game.players?.length || 0);
-  const joinUrl = `${process.env.PROD_API_URL}?id=${game.id}`;
+  const joinUrl = `${process.env.APP_URL}?id=${game.id}`;
   console.log('Formatting game for Telegram:', game);
   const venueName = game?.venue?.label;
 
@@ -95,8 +95,8 @@ export function formatUpcomingGameForTelegram(game: Game): string {
   const date = format(new Date(game.dateTime), 'PPP');
   const time = format(new Date(game.dateTime), 'HH:mm');
   const availableSpots = 4 - (game.players?.length || 0);
-  const venueName = JSON.parse(game?.venue.toString()).label;
-  const joinUrl = `${process.env.PROD_API_URL}?id=${game.id}`;
+  const venueName = game.venue.label;
+  const joinUrl = `${process.env.APP_URL}?id=${game.id}`;
 
   return `<a href="${joinUrl}">${date} - ${time} | ${venueName} | ${game.level} | ${availableSpots}/4</a>`;
 }
@@ -105,7 +105,7 @@ export function formatPlayerJoinedMessage(game: Game, player: Player): string {
   const date = format(new Date(game.dateTime), 'PPP');
   const time = format(new Date(game.dateTime), 'HH:mm');
   const availableSpots = 4 - (game.players?.length || 0);
-  const gameUrl = `${process.env.PROD_API_URL}/games/${game.id}`;
+  const gameUrl = `${process.env.APP_URL}/games/${game.id}`;
 
   const venueName = JSON.parse(game?.venue.toString()).label;
   console.log('Formatting player joined message:', game, venueName);

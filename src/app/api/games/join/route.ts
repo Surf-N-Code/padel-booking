@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
 
     await sendTelegramMessage(formatPlayerJoinedMessage(game, player), {
       text: 'View Game',
-      url: `${process.env.PROD_API_URL}?id=${game.id}`,
+      url: `${process.env.APP_URL}?id=${game.id}`,
     });
 
     return NextResponse.json({ success: true });

@@ -67,7 +67,7 @@ export async function POST(request: Request) {
 `;
       await sendTelegramMessage(venueNotification, {
         text: 'Open game',
-        url: `${process.env.PROD_API_URL}?id=${game.id}`,
+        url: `${process.env.APP_URL}?id=${game.id}`,
       });
     }
 

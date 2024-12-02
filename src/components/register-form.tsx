@@ -61,7 +61,7 @@ export function RegisterForm() {
         throw new Error(data.error || 'Failed to register');
       }
 
-      router.push('/login');
+      router.push('/login?registered=true');
     } catch (error: unknown) {
       console.error('Registration error:', error);
       setError(error instanceof Error ? error.message : 'Failed to register');
