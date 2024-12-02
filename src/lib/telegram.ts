@@ -6,6 +6,7 @@ const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
 export async function sendTelegramMessage(
   text: string,
+  parseMode: 'HTML' | 'Markdown' = 'HTML',
   replyMarkup?: { text: string; url: string }
 ) {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
@@ -15,7 +16,7 @@ export async function sendTelegramMessage(
   console.log('Sending Telegram message:', {
     chat_id: TELEGRAM_CHAT_ID,
     text,
-    parse_mode: 'HTML',
+    parse_mode: parseMode,
     disable_web_page_preview: true,
     ...(replyMarkup && {
       reply_markup: {
@@ -42,7 +43,7 @@ export async function sendTelegramMessage(
         body: JSON.stringify({
           chat_id: TELEGRAM_CHAT_ID,
           text,
-          parse_mode: 'MarkdownV2',
+          parse_mode: parseMode,
           disable_web_page_preview: true,
           ...(replyMarkup && {
             reply_markup: {

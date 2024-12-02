@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       players: [...currentPlayers.map((p) => JSON.parse(p)), player],
     };
 
-    await sendTelegramMessage(formatPlayerJoinedMessage(game, player), {
+    await sendTelegramMessage(formatPlayerJoinedMessage(game, player), 'HTML', {
       text: 'View Game',
       url: `${process.env.APP_URL}?id=${game.id}`,
     });

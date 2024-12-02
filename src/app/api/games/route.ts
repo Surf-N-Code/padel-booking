@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     if (interestedUsers.length > 0) {
       const venueNotification = `${formatGameForTelegram(gameForNotification)}
 `;
-      await sendTelegramMessage(venueNotification, {
+      await sendTelegramMessage(venueNotification, 'HTML', {
         text: 'Open game',
         url: `${process.env.APP_URL}?id=${game.id}`,
       });

@@ -25,7 +25,8 @@ export async function GET(request: Request) {
     const userId = await redis.get(`telegram:${telegramUserId}`);
     if (!userId) {
       await sendTelegramMessage(
-        `Please [register](${process.env.APP_URL}/register?telegramUserId=${telegramUserId}) to see upcoming games`
+        `Please [register](${process.env.APP_URL}/register?telegramUserId=${telegramUserId}) to see upcoming games`,
+        'Markdown'
       );
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
@@ -33,6 +34,7 @@ export async function GET(request: Request) {
     // Get user email from userId
     const userEmail = await redis.get(`userid:${userId}`);
     if (!userEmail) {
+      console.log('user with id: ', userId, 'not found');
       return NextResponse.json(
         { error: 'User email not found' },
         { status: 404 }
@@ -42,6 +44,7 @@ export async function GET(request: Request) {
     // Get user profile to access favorite venues
     const userJson = await redis.get(`user:${userEmail}`);
     if (!userJson) {
+      console.log('user with email: ', userEmail, 'not found');
       return NextResponse.json(
         { error: 'User profile not found' },
         { status: 404 }
@@ -97,11 +100,16 @@ ${relevantGames
   .join('\n\n')}
 `;
 
-      await sendTelegramMessage(message);
+      await sendTelegramMessage(message, 'HTML');
       return NextResponse.json({
         success: true,
         gamesFound: relevantGames.length,
       });
+    } else {
+      await sendTelegramMessage(
+        `No upcoming games at your favorite venues\. Please visit your [profile settings](${process.env.APP_URL}/profile) to select your favorite padel locations.`,
+        'Markdown'
+      );
     }
 
     return NextResponse.json({
