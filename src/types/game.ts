@@ -7,11 +7,11 @@ export interface Player {
 export interface Game {
   id: string;
   dateTime: string;
-  venue: Venue;
-  location: string;
   level: string;
+  venue: Venue;
   createdAt: string;
   createdBy: string;
+  creatorEmail: string;
   players: Player[];
 }
 

@@ -41,7 +41,7 @@ export async function GET(request: Request) {
       );
     }
 
-    // Get user profile to access favorite venues
+    // Get user profile
     const userJson = await redis.get(`user:${userEmail}`);
     if (!userJson) {
       console.log('user with email: ', userEmail, 'not found');
@@ -51,9 +51,15 @@ export async function GET(request: Request) {
       );
     }
 
-    console.log('userJson', userJson, userEmail, userId);
     const user = JSON.parse(userJson) as User;
     const favoriteVenues = user.favoriteVenues || [];
+
+    if (favoriteVenues.length === 0) {
+      await sendTelegramMessage(
+        'You have no favorite venues. Please visit your [profile settings](${process.env.APP_URL}/profile) to select your favorite padel locations.',
+        'Markdown'
+      );
+    }
 
     // Get current timestamp
     const now = Date.now();
@@ -71,29 +77,25 @@ export async function GET(request: Request) {
           id,
           venue: JSON.parse(gameData.venue),
           players: players.map((p) => JSON.parse(p)),
-        };
+        } as Game;
       })
     );
 
-    console.log('games', games);
-
     // Filter games based on criteria:
-    // 1. Has open slots
-    // 2. Venue is in user's favorites
-    // 3. Game is in the future (already filtered by zrangebyscore)
+    // 1. Game is in the future (already filtered by zrangebyscore)
+    // 2. User created the game OR is a player in the game
     const relevantGames = games.filter((game) => {
-      const hasOpenSlots = (game.players?.length || 0) < 4;
-      const isVenueFavorite = favoriteVenues.includes(game.venue.id);
-      return hasOpenSlots && isVenueFavorite;
+      const isCreator = game.creatorEmail === userEmail;
+      const isPlayer = game.players.some((p) => p.userId === userId);
+      const hasOpenSlots = game.players.length < 4;
+      const isVenueFavorite = favoriteVenues?.includes(game.venue.id);
+      return (isCreator || isPlayer || isVenueFavorite) && hasOpenSlots;
     });
-
-    console.log('relevantGames', relevantGames);
-    console.log('favoriteVenues', favoriteVenues);
 
     // Format message for Telegram
     if (relevantGames.length > 0) {
       const message = `
-🎾 <b>Upcoming Games at Your Favorite Venues</b>
+🎾 <b>Your Upcoming Games</b>
 
 ${relevantGames
   .map((game) => formatUpcomingGameForTelegram(game as Game))
@@ -107,13 +109,13 @@ ${relevantGames
       });
     } else {
       await sendTelegramMessage(
-        `No upcoming games at your favorite venues\. Please visit your [profile settings](${process.env.APP_URL}/profile) to select your favorite padel locations.`,
-        'Markdown'
+        'There are no upcoming games. Visit our website to join or create a game!',
+        'HTML'
       );
     }
 
     return NextResponse.json({
-      message: 'No upcoming games at your favorite venues',
+      message: 'No upcoming games found',
       gamesFound: 0,
     });
   } catch (error) {

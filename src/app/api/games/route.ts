@@ -17,6 +17,7 @@ export async function POST(request: Request) {
       venue: JSON.stringify(data.venue),
       createdAt: new Date().toISOString(),
       createdBy: data.createdBy || 'anonymous',
+      creatorEmail: data.creatorEmail || 'anonymous',
     };
 
     // Store game data in hash
@@ -33,12 +34,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get base URL for notifications
-    const headersList = await headers();
-    const host = headersList.get('host');
-    const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
-    const baseUrl = `${protocol}://${host}`;
-
     // Format game data for notifications
     const gameForNotification = {
       ...game,
@@ -47,29 +42,12 @@ export async function POST(request: Request) {
       location: JSON.parse(game.venue).addressLines,
     };
 
-    // Get all users
-    const userEmails = await redis.smembers('users');
-
-    // Find users who have favorited this venue
-    const usersWithFavorites = await Promise.all(
-      userEmails.map(async (email) => {
-        const userJson = await redis.get(`user:${email}`);
-        if (!userJson) return null;
-        const user = JSON.parse(userJson);
-        return user.favoriteVenues?.includes(data.venue.id) ? user : null;
-      })
-    );
-
-    // Filter out null values and send notifications
-    const interestedUsers = usersWithFavorites.filter(Boolean);
-    if (interestedUsers.length > 0) {
-      const venueNotification = `${formatGameForTelegram(gameForNotification)}
-`;
-      await sendTelegramMessage(venueNotification, 'HTML', {
-        text: 'Open game',
-        url: `${process.env.APP_URL}?id=${game.id}`,
-      });
-    }
+    // Send notification about new game
+    const notification = formatGameForTelegram(gameForNotification);
+    await sendTelegramMessage(notification, 'HTML', {
+      text: 'View Game',
+      url: `${process.env.APP_URL}?id=${game.id}`,
+    });
 
     return NextResponse.json({ game });
   } catch (error) {
