@@ -39,22 +39,17 @@ export async function POST(req: NextRequest) {
     // Add player to game
     await redis.sadd(`game:${gameId}:players`, JSON.stringify(player));
 
-    // Send Telegram notification
-    const headersList = await headers();
-    const host = headersList.get('host');
-    const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
-    const baseUrl = `${protocol}://${host}`;
-
     //@ts-ignore
     const game: Game = {
       ...gameData,
       players: [...currentPlayers.map((p) => JSON.parse(p)), player],
     };
 
-    await sendTelegramMessage(formatPlayerJoinedMessage(game, player), 'HTML', {
-      text: 'View Game',
-      url: `${process.env.APP_URL}?id=${game.id}`,
-    });
+    //@TODO Telegram notification to all participating players
+    // await sendTelegramMessage(formatPlayerJoinedMessage(game, player), 'HTML', {
+    //   text: 'View Game',
+    //   url: `${process.env.APP_URL}?id=${game.id}`,
+    // });
 
     return NextResponse.json({ success: true });
   } catch (error) {

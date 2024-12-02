@@ -27,10 +27,12 @@ import { useState } from 'react';
 import { VenueCombobox } from './venue-combo-box';
 import { fetchVenues } from '@/lib/api';
 import { formSchema } from '@/formSchema/newGame';
+import { useSession } from 'next-auth/react';
 
 export function NewGameForm() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
 
   let {
     data: venues,
@@ -75,7 +77,7 @@ export function NewGameForm() {
           players: values.players.filter(Boolean).map((name) => ({
             id: crypto.randomUUID(),
             name,
-            userId: 'temp-user-id',
+            userId: session?.user?.id,
           })),
         }),
       });

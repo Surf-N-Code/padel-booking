@@ -5,4 +5,5 @@ GET http://localhost:3000/api/games
 GET http://localhost:3000/api/telegram/games
 
 ### /telegram/upcoming
-GET http://localhost:3000/api/telegram/upcoming
+GET http://localhost:3000/api/telegram/upcoming?telegramUserId=5057854535
+

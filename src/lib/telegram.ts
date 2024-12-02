@@ -5,6 +5,7 @@ const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
 export async function sendTelegramMessage(
+  chatId: string,
   text: string,
   parseMode: 'HTML' | 'Markdown' = 'HTML',
   replyMarkup?: { text: string; url: string }
@@ -14,7 +15,7 @@ export async function sendTelegramMessage(
     return;
   }
   console.log('Sending Telegram message:', {
-    chat_id: TELEGRAM_CHAT_ID,
+    chat_id: chatId,
     text,
     parse_mode: parseMode,
     disable_web_page_preview: true,
@@ -41,7 +42,7 @@ export async function sendTelegramMessage(
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          chat_id: TELEGRAM_CHAT_ID,
+          chat_id: chatId,
           text,
           parse_mode: parseMode,
           disable_web_page_preview: true,

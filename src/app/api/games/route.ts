@@ -44,10 +44,12 @@ export async function POST(request: Request) {
 
     // Send notification about new game
     const notification = formatGameForTelegram(gameForNotification);
-    await sendTelegramMessage(notification, 'HTML', {
-      text: 'View Game',
-      url: `${process.env.APP_URL}?id=${game.id}`,
-    });
+    //@TODO Telegram notification to all players who have this venue in their favourites
+    // const players = await redis.smembers(`user:${data.createdBy}:favourites`);
+    // await sendTelegramMessage(notification, 'HTML', {
+    //   text: 'View Game',
+    //   url: `${process.env.APP_URL}?id=${game.id}`,
+    // });
 
     return NextResponse.json({ game });
   } catch (error) {

@@ -137,7 +137,7 @@ export function GamesList({ gameId }: GamesListProps) {
           player: {
             id: crypto.randomUUID(),
             name: playerName || 'Anonymous Player',
-            userId: 'temp-user-id',
+            userId: session?.user?.id || 'anonymous-user-id',
           },
         }),
       });
@@ -161,7 +161,7 @@ export function GamesList({ gameId }: GamesListProps) {
               {
                 id: 'temp-' + crypto.randomUUID(),
                 name: playerName || 'Anonymous Player',
-                userId: 'temp-user-id',
+                userId: session?.user?.id || 'anonymous-user-id',
               },
             ]);
             return {

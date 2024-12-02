@@ -25,6 +25,7 @@ export async function GET(request: Request) {
     const userId = await redis.get(`telegram:${telegramUserId}`);
     if (!userId) {
       await sendTelegramMessage(
+        telegramUserId,
         `Please [register](${process.env.APP_URL}/register?telegramUserId=${telegramUserId}) to see upcoming games`,
         'Markdown'
       );
@@ -56,6 +57,7 @@ export async function GET(request: Request) {
 
     if (favoriteVenues.length === 0) {
       await sendTelegramMessage(
+        telegramUserId,
         'You have no favorite venues. Please visit your [profile settings](${process.env.APP_URL}/profile) to select your favorite padel locations.',
         'Markdown'
       );
@@ -109,7 +111,8 @@ ${relevantGames
       });
     } else {
       await sendTelegramMessage(
-        'There are no upcoming games. Visit our website to join or create a game!',
+        telegramUserId,
+        'No upcoming games found for your favorite venues. Visit our website to join or create a game or subscribe to more venues!',
         'HTML'
       );
     }
