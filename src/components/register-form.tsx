@@ -30,7 +30,7 @@ export function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const telegramId = searchParams.get('telegramId');
+  const telegramId = searchParams.get('telegramUserId');
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

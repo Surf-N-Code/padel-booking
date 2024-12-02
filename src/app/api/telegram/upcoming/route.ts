@@ -12,9 +12,9 @@ import { User } from '@/types/auth';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const telegramId = searchParams.get('telegramId');
+    const telegramUserId = searchParams.get('telegramUserId');
 
-    if (!telegramId) {
+    if (!telegramUserId) {
       return NextResponse.json(
         { error: 'Telegram ID is required' },
         { status: 400 }
@@ -22,8 +22,11 @@ export async function GET(request: Request) {
     }
 
     // Get user by Telegram ID
-    const userId = await redis.get(`telegram:${telegramId}`);
+    const userId = await redis.get(`telegram:${telegramUserId}`);
     if (!userId) {
+      await sendTelegramMessage(
+        `You are not registered yet, please visit: ${process.env.PROD_API_URL}/register?telegramUserId=${telegramUserId}`
+      );
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
@@ -45,6 +48,7 @@ export async function GET(request: Request) {
       );
     }
 
+    console.log('userJson', userJson, userEmail, userId);
     const user = JSON.parse(userJson) as User;
     const favoriteVenues = user.favoriteVenues || [];
 
@@ -68,6 +72,8 @@ export async function GET(request: Request) {
       })
     );
 
+    console.log('games', games);
+
     // Filter games based on criteria:
     // 1. Has open slots
     // 2. Venue is in user's favorites
@@ -77,6 +83,9 @@ export async function GET(request: Request) {
       const isVenueFavorite = favoriteVenues.includes(game.venue.id);
       return hasOpenSlots && isVenueFavorite;
     });
+
+    console.log('relevantGames', relevantGames);
+    console.log('favoriteVenues', favoriteVenues);
 
     // Format message for Telegram
     if (relevantGames.length > 0) {

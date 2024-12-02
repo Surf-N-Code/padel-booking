@@ -86,7 +86,6 @@ const scrapeVenues = async () => {
 
   //sort location alphabetically by name
   extractedLocations.sort((a, b) => a.name.localeCompare(b.name));
-  console.log('extractedLocations', extractedLocations);
 
   // Store in Redis with expiration
   await redis.setex(
