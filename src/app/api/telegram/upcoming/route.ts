@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     const userId = await redis.get(`telegram:${telegramUserId}`);
     if (!userId) {
       await sendTelegramMessage(
-        `You are not registered yet, please visit: ${process.env.APP_URL}/register?telegramUserId=${telegramUserId}`
+        `Please [register](${process.env.APP_URL}/register?telegramUserId=${telegramUserId}) to see upcoming games`
       );
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
