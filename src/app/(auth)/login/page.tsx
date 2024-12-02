@@ -12,11 +12,12 @@ export default function LoginPage() {
   return (
     <div>
       {registered && (
-        <Alert className="max-w-md mx-auto mb-4" variant="success">
+        <Alert className="max-w-md mx-auto mb-4 mt-6" variant="success">
           <Info className="h-4 w-4" />
           <AlertDescription>
-            Registration successful! After logging in, please visit your profile
-            settings to select your favorite padel locations!
+            Registration successful! <p className="mb-6"></p>
+            After logging in, please visit your profile settings to select your
+            favorite padel locations!
           </AlertDescription>
         </Alert>
       )}

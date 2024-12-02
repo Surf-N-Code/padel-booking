@@ -39,7 +39,7 @@ export function LoginForm() {
   }
 
   return (
-    <div className="flex justify-center items-center h-screen">
+    <div className="flex justify-center items-center mt-12">
       <Card className="w-[350px]">
         <CardHeader>
           <CardTitle>Login</CardTitle>

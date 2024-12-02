@@ -42,7 +42,7 @@ export async function sendTelegramMessage(
         body: JSON.stringify({
           chat_id: TELEGRAM_CHAT_ID,
           text,
-          parse_mode: 'HTML',
+          parse_mode: 'MarkdownV2',
           disable_web_page_preview: true,
           ...(replyMarkup && {
             reply_markup: {
