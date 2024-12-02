@@ -2,9 +2,17 @@
 
 ## Telegram
 
-- List upcoming games with open slots with links to join the game
-- Add game link
-- Get notified on Telegram when player joins the game
+### Registration flow
+
+- Api call from uchat with new registration from user
+- api endpoint checks if user with that telegram id already exists
+- if not, user is sent a link to register on the website with prefilled telegram id in a hidden field using url params
+- user needs to fill in username and password in the register form
+- if the url does not contain the telegram id, the user is sent to the normal register page
+
+### Game notifications
+
+- in the existing functionality for sending telegram notifications for new games, the user's telegram id should be used to send the notification to the correct user
 
 ## Authentifizierung
 

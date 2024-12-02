@@ -7,42 +7,60 @@ import { NextResponse } from 'next/server';
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as RegisterRequest;
-    const { email, password } = body;
+    const { email, password, name, telegramId } = body;
 
     if (!email || !password) {
       return NextResponse.json(
-        { error: 'Username and password are required' },
+        { error: 'Email and password are required' },
         { status: 400 }
       );
     }
 
-    // Check if username exists
+    // Check if email exists
     const existingUser = await redis.get(`user:${email}`);
     if (existingUser) {
       return NextResponse.json(
-        { error: 'Username already exists' },
+        { error: 'Email already exists' },
         { status: 409 }
       );
+    }
+
+    // If telegramId is provided, check if it's already registered
+    if (telegramId) {
+      const existingTelegramUser = await redis.get(`telegram:${telegramId}`);
+      if (existingTelegramUser) {
+        return NextResponse.json(
+          { error: 'Telegram ID already registered' },
+          { status: 409 }
+        );
+      }
     }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user object
+    const userId = nanoid();
     const user: User = {
-      id: nanoid(),
+      id: userId,
       email,
       password: hashedPassword,
       createdAt: new Date().toISOString(),
+      name,
+      telegramId,
     };
 
     // Store in Redis
     await redis.set(`user:${email}`, JSON.stringify(user));
-    await redis.set(`userid:${user.id}`, email);
+    await redis.set(`userid:${userId}`, email);
     await redis.sadd('users', email);
 
+    // If telegramId is provided, create the telegram:id -> userId mapping
+    if (telegramId) {
+      await redis.set(`telegram:${telegramId}`, userId);
+    }
+
     // Return sanitized user object (without password)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...sanitizedUser } = user;
 
     return NextResponse.json(

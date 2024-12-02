@@ -6,6 +6,7 @@ export interface User {
   name?: string;
   padelLevel?: string;
   favoriteVenues?: string[];
+  telegramId?: string;
 }
 
 export interface Session {
@@ -18,6 +19,8 @@ export interface Session {
 export interface RegisterRequest {
   email: string;
   password: string;
+  name?: string;
+  telegramId?: string;
 }
 
 // Add this to properly type the session
