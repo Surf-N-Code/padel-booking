@@ -39,6 +39,7 @@ export async function PUT(req: Request) {
     const body = await req.json();
     const {
       name,
+      lastName,
       email,
       currentPassword,
       newPassword,
@@ -73,6 +74,7 @@ export async function PUT(req: Request) {
     const updatedUser: User = {
       ...user,
       name: name || user.name,
+      lastName: lastName || user.lastName,
       padelLevel: padelLevel || user.padelLevel,
       favoriteVenues: favoriteVenues || user.favoriteVenues,
     };

@@ -70,8 +70,7 @@ export function GamesList({ gameId }: GamesListProps) {
   const getDefaultPlayerName = (gameId: string) => {
     return playerNames[gameId] !== undefined
       ? playerNames[gameId]
-      : `${userProfile?.name} ${userProfile?.lastName ? userProfile?.lastName.slice(0, 2) + '.' : ''}` ||
-          '';
+      : userProfile?.name || '';
   };
 
   // Initialize playerNames with profile name when profile is loaded
@@ -125,10 +124,13 @@ export function GamesList({ gameId }: GamesListProps) {
     mutationFn: async ({
       gameId,
       playerName,
+      playerLastName,
     }: {
       gameId: string;
       playerName: string;
+      playerLastName: string;
     }) => {
+      console.log('Joining game', gameId, playerName, playerLastName);
       setLoadingState({ gameId, type: 'join' });
       const response = await fetch(`/api/games/join`, {
         method: 'POST',
@@ -138,6 +140,7 @@ export function GamesList({ gameId }: GamesListProps) {
           player: {
             id: crypto.randomUUID(),
             name: playerName,
+            lastName: playerLastName,
             userId: session?.user?.id || 'anonymous-user-id',
           },
         }),
@@ -145,7 +148,7 @@ export function GamesList({ gameId }: GamesListProps) {
       if (!response.ok) throw new Error('Failed to join game');
       return response.json();
     },
-    onMutate: async ({ gameId, playerName }) => {
+    onMutate: async ({ gameId, playerName, playerLastName }) => {
       await queryClient.cancelQueries({ queryKey: ['games'] });
       const previousGames = queryClient.getQueryData<Game[]>(['games']);
 
@@ -162,6 +165,7 @@ export function GamesList({ gameId }: GamesListProps) {
               {
                 id: 'temp-' + crypto.randomUUID(),
                 name: playerName || 'Anonymous Player',
+                lastName: playerLastName,
                 userId: session?.user?.id || 'anonymous-user-id',
               },
             ]);
@@ -174,7 +178,12 @@ export function GamesList({ gameId }: GamesListProps) {
         })
       );
 
-      return { previousGames, previousPlayerName: playerName, gameId };
+      return {
+        previousGames,
+        previousPlayerName: playerName,
+        playerLastName,
+        gameId,
+      };
     },
     onError: (_, __, context) => {
       queryClient.setQueryData(['games'], context?.previousGames);
@@ -250,6 +259,7 @@ export function GamesList({ gameId }: GamesListProps) {
       await joinGame.mutate({
         gameId,
         playerName: getDefaultPlayerName(gameId),
+        playerLastName: userProfile?.lastName,
       });
     } catch (error) {
       console.error('Failed to join game:', error);
@@ -421,7 +431,7 @@ export function GamesList({ gameId }: GamesListProps) {
                         key={player.id}
                         className="flex items-center justify-between"
                       >
-                        <span>{player.name}</span>
+                        <span>{`${player.name} ${player?.lastName ? player.lastName.slice(0, 1) + '.' : ''}`}</span>
                         <Button
                           variant="outline"
                           size="sm"
