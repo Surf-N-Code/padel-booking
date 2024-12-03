@@ -243,8 +243,8 @@ export default function ProfilePage() {
         <h1 className="text-3xl font-bold">Profile Settings</h1>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="name"
@@ -292,42 +292,43 @@ export default function ProfilePage() {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="currentPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Current Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="Enter to change password"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="currentPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Current Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="Enter to change password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="newPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>New Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="Enter new password"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
+              <FormField
+                control={form.control}
+                name="newPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>New Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="Enter new password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
               name="padelLevel"
@@ -361,7 +362,7 @@ export default function ProfilePage() {
               name="favoriteVenues"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Favorite Venues</FormLabel>
+                  <FormLabel>Favorite Venues*</FormLabel>
                   <Popover open={venuesOpen} onOpenChange={setVenuesOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -436,7 +437,12 @@ export default function ProfilePage() {
               name="notificationHours"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notification Hours</FormLabel>
+                  <FormLabel>Notification Hours*</FormLabel>
+                  <span className="text-xs text-muted-foreground ml-2">
+                    Select the hours of the day you are available for playing
+                    padel. You will receive notifications for new games at your
+                    favorite venues during these hours.
+                  </span>
                   <Popover open={hoursOpen} onOpenChange={setHoursOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
