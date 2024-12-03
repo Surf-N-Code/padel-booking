@@ -44,6 +44,7 @@ export async function PUT(req: Request) {
       currentPassword,
       newPassword,
       padelLevel,
+      notificationHours,
       favoriteVenues,
     } = body;
 
@@ -77,6 +78,7 @@ export async function PUT(req: Request) {
       lastName: lastName || user.lastName,
       padelLevel: padelLevel || user.padelLevel,
       favoriteVenues: favoriteVenues || user.favoriteVenues,
+      notificationHours: notificationHours || user.notificationHours,
     };
 
     // If email is changing, need to update Redis keys

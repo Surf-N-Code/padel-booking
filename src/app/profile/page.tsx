@@ -62,6 +62,7 @@ const profileFormSchema = z
     favoriteVenues: z
       .array(z.string())
       .nonempty('At least one favorite venue is required'),
+    notificationHours: z.array(z.string()).min(1, 'Select at least one hour'),
   })
   .refine(
     (data) => {
@@ -86,11 +87,21 @@ const profileFormSchema = z
     }
   );
 
+// Generate hours array
+const HOURS = Array.from({ length: 17 }, (_, i) => {
+  const hour = i + 7;
+  return {
+    value: hour.toString(),
+    label: hour.toString().padStart(2, '0') + ':00',
+  };
+});
+
 export default function ProfilePage() {
   const { data: session, update } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [venuesOpen, setVenuesOpen] = useState(false);
+  const [hoursOpen, setHoursOpen] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch user profile
@@ -123,6 +134,7 @@ export default function ProfilePage() {
       email: session?.user?.email || '',
       padelLevel: 'mixed',
       favoriteVenues: [],
+      notificationHours: [],
     },
   });
 
@@ -135,6 +147,7 @@ export default function ProfilePage() {
         email: userProfile.email || '',
         padelLevel: userProfile.padelLevel || 'mixed',
         favoriteVenues: userProfile.favoriteVenues || [],
+        notificationHours: userProfile.notificationHours || [],
         currentPassword: '',
         newPassword: '',
       });
@@ -167,6 +180,7 @@ export default function ProfilePage() {
       form.reset({
         ...values,
         favoriteVenues: values.favoriteVenues, // Explicitly set favoriteVenues
+        notificationHours: values.notificationHours, // Explicitly set notificationHours
         currentPassword: '',
         newPassword: '',
       });
@@ -340,13 +354,13 @@ export default function ProfilePage() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Favorite Venues</FormLabel>
-                  <Popover open={open} onOpenChange={setOpen}>
+                  <Popover open={venuesOpen} onOpenChange={setVenuesOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
                           variant="outline"
                           role="combobox"
-                          aria-expanded={open}
+                          aria-expanded={venuesOpen}
                           className="w-full justify-between"
                         >
                           {field.value.length > 0
@@ -400,6 +414,70 @@ export default function ProfilePage() {
                               ))}
                             </CommandGroup>
                           </ScrollArea>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="notificationHours"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notification Hours</FormLabel>
+                  <Popover open={hoursOpen} onOpenChange={setHoursOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={hoursOpen}
+                          className="w-full justify-between"
+                        >
+                          {field.value?.length > 0
+                            ? `Selected ${field.value.length} hours`
+                            : 'Select hours'}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0">
+                      <Command>
+                        <CommandInput placeholder="Search hour..." />
+                        <CommandList>
+                          <CommandEmpty>No hour found.</CommandEmpty>
+                          <CommandGroup>
+                            {HOURS.map((hour) => (
+                              <CommandItem
+                                key={hour.value}
+                                onSelect={() => {
+                                  const currentValue = field.value || [];
+                                  const newValue = currentValue.includes(
+                                    hour.value
+                                  )
+                                    ? currentValue.filter(
+                                        (v) => v !== hour.value
+                                      )
+                                    : [...currentValue, hour.value];
+                                  field.onChange(newValue);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    'mr-2 h-4 w-4',
+                                    field.value?.includes(hour.value)
+                                      ? 'opacity-100'
+                                      : 'opacity-0'
+                                  )}
+                                />
+                                {hour.label}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
                         </CommandList>
                       </Command>
                     </PopoverContent>

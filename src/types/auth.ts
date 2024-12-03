@@ -8,6 +8,7 @@ export interface User {
   padelLevel?: string;
   favoriteVenues?: string[];
   telegramId?: string;
+  notificationHours?: string[];
 }
 
 export interface Session {
