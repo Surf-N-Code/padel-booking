@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import { Button } from './ui/button';
 import { UserPlus, UserMinus, MapPin, Star, Loader2 } from 'lucide-react';
 import type { Game, Player, Venue } from '@/types/game';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
@@ -341,6 +341,15 @@ export function GamesList({ gameId }: GamesListProps) {
     handleSavePlayers(gameId);
   };
 
+  // Check if current user is already a player in the game
+  const isUserInGame = useCallback(
+    (game: Game) => {
+      if (!session?.user) return false;
+      return game.players.some((player) => player.userId === session.user.id);
+    },
+    [session?.user]
+  );
+
   if (isLoading) {
     return (
       <div className="flex flex-col space-y-3">
@@ -476,38 +485,43 @@ export function GamesList({ gameId }: GamesListProps) {
                         className="flex items-center justify-between"
                       >
                         <span>{`${player.name} ${player?.lastName ? player.lastName.slice(0, 1) + '.' : ''}`}</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRemovePlayer(game.id, player)}
-                          disabled={isButtonLoading(
-                            game.id,
-                            'leave',
-                            player.id
-                          )}
-                        >
-                          <UserMinus className="h-4 w-4" />
-                        </Button>
+                        {player.userId === session?.user?.id && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRemovePlayer(game.id, player)}
+                            disabled={isButtonLoading(game.id, 'leave')}
+                          >
+                            <UserMinus className="h-4 w-4" />
+                          </Button>
+                        )}
                       </li>
                     ))}
                     {(!game.players || game.players.length < 4) && (
                       <li className="mt-2">
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full"
-                            onClick={() => handleAddPlayer(game.id)}
-                            disabled={isButtonLoading(game.id, 'join')}
-                          >
-                            {isButtonLoading(game.id, 'join') ? (
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => handleAddPlayer(game.id)}
+                          disabled={
+                            isButtonLoading(game.id, 'join') ||
+                            isUserInGame(game)
+                          }
+                        >
+                          {isButtonLoading(game.id, 'join') ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : isUserInGame(game) ? (
+                            <>
+                              <Check className="mr-2 h-4 w-4" />
+                              Already Joined
+                            </>
+                          ) : (
+                            <>
                               <UserPlus className="mr-2 h-4 w-4" />
-                            )}
-                            Join Game
-                          </Button>
-                        </div>
+                              Join Game
+                            </>
+                          )}
+                        </Button>
                       </li>
                     )}
                   </ul>
@@ -524,7 +538,7 @@ export function GamesList({ gameId }: GamesListProps) {
             <PaginationItem>
               <PaginationPrevious
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
+                isActive={currentPage > 1}
               />
             </PaginationItem>
 
@@ -548,7 +562,7 @@ export function GamesList({ gameId }: GamesListProps) {
                 onClick={() =>
                   setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                 }
-                disabled={currentPage === totalPages}
+                isActive={currentPage !== totalPages}
               />
             </PaginationItem>
           </PaginationContent>
