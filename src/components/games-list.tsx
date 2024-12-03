@@ -38,6 +38,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import { toast } from 'react-hot-toast';
 
 type LoadingState = {
   gameId: string;
@@ -233,7 +234,7 @@ export function GamesList({ gameId }: GamesListProps) {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['games'] });
-      console.log('Success', variables);
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
       setPlayerNames((prev) => ({
         ...prev,
         [variables.gameId]: '',
