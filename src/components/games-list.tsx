@@ -29,6 +29,15 @@ import { Skeleton } from './ui/skeleton';
 import { LEVEL_BADGES } from '@/lib/const';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 
 type LoadingState = {
   gameId: string;
@@ -50,9 +59,10 @@ export function GamesList({ gameId }: GamesListProps) {
   const queryClient = useQueryClient();
   const [playerNames, setPlayerNames] = useState<Record<string, string>>({});
   const [loadingState, setLoadingState] = useState<LoadingState | null>(null);
-  const [showAvailableOnly, setShowAvailableOnly] = useState(true);
+  const [showAvailableOnly, setShowAvailableOnly] = useState(false);
   const [selectedVenue, setSelectedVenue] = useState<string>('');
-  const [open, setOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const gamesPerPage = 8;
 
   // Fetch user profile when component mounts
   const { data: userProfile } = useQuery({
@@ -114,11 +124,53 @@ export function GamesList({ gameId }: GamesListProps) {
   }, [uniqueVenues, userProfile?.favoriteVenues]);
 
   // Filter games based on availability and selected venue
-  const filteredGames = games.filter(
-    (game) =>
-      (!showAvailableOnly || (game.players?.length || 0) < 4) &&
-      (!selectedVenue || game.venue.label === selectedVenue)
-  );
+  const filteredGames = games.filter((game) => {
+    const availabilityMatch = !showAvailableOnly || game.players.length < 4;
+    const venueMatch = !selectedVenue || game.venue.label === selectedVenue;
+    return availabilityMatch && venueMatch;
+  });
+
+  // Calculate pagination
+  const totalGames = filteredGames.length;
+  const totalPages = Math.ceil(totalGames / gamesPerPage);
+  const startIndex = (currentPage - 1) * gamesPerPage;
+  const endIndex = startIndex + gamesPerPage;
+  const currentGames = filteredGames.slice(startIndex, endIndex);
+
+  // Generate page numbers
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('ellipsis');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('ellipsis');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('ellipsis');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('ellipsis');
+        pages.push(totalPages);
+      }
+    }
+    return pages;
+  };
 
   const joinGame = useMutation({
     mutationFn: async ({
@@ -298,7 +350,7 @@ export function GamesList({ gameId }: GamesListProps) {
     handleSavePlayers(gameId);
   };
 
-  if (isLoading)
+  if (isLoading) {
     return (
       <div className="flex flex-col space-y-3">
         <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 justify-between">
@@ -312,6 +364,8 @@ export function GamesList({ gameId }: GamesListProps) {
         </div>
       </div>
     );
+  }
+
   if (error) return <div>Error loading games: {error.message}</div>;
   if (!games?.length) return <div>No games scheduled yet.</div>;
 
@@ -329,12 +383,11 @@ export function GamesList({ gameId }: GamesListProps) {
           </div>
 
           <div className="flex-1">
-            <Popover open={open} onOpenChange={setOpen}>
+            <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   role="combobox"
-                  aria-expanded={open}
                   className="justify-between w-[250px]"
                 >
                   {selectedVenue || 'Filter by venue'}
@@ -350,7 +403,7 @@ export function GamesList({ gameId }: GamesListProps) {
                       <CommandItem
                         onSelect={() => {
                           setSelectedVenue('');
-                          setOpen(false);
+                          setCurrentPage(1);
                         }}
                       >
                         <Check
@@ -366,26 +419,21 @@ export function GamesList({ gameId }: GamesListProps) {
                           key={venue.id}
                           onSelect={() => {
                             setSelectedVenue(venue.label);
-                            setOpen(false);
+                            setCurrentPage(1);
                           }}
-                          className="truncate"
                         >
-                          <div className="flex items-center gap-2">
-                            <Check
-                              className={cn(
-                                'mr-2 h-4 w-4',
-                                selectedVenue === venue.label
-                                  ? 'opacity-100'
-                                  : 'opacity-0'
-                              )}
-                            />
-                            {userProfile?.favoriteVenues?.includes(
-                              venue.id
-                            ) && (
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          <Check
+                            className={cn(
+                              'mr-2 h-4 w-4',
+                              selectedVenue === venue.label
+                                ? 'opacity-100'
+                                : 'opacity-0'
                             )}
-                            <span className="truncate">{venue.label}</span>
-                          </div>
+                          />
+                          {userProfile?.favoriteVenues?.includes(venue.id) && (
+                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          )}
+                          <span className="truncate">{venue.label}</span>
                         </CommandItem>
                       ))}
                     </CommandGroup>
@@ -397,8 +445,8 @@ export function GamesList({ gameId }: GamesListProps) {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
-        {filteredGames.map((game) => (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {currentGames.map((game) => (
           <Card key={game.id}>
             <CardHeader>
               <div className="flex justify-between items-start">
@@ -477,6 +525,43 @@ export function GamesList({ gameId }: GamesListProps) {
           </Card>
         ))}
       </div>
+
+      {totalPages > 1 && (
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              />
+            </PaginationItem>
+
+            {getPageNumbers().map((page, index) => (
+              <PaginationItem key={index}>
+                {page === 'ellipsis' ? (
+                  <PaginationEllipsis />
+                ) : (
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page as number)}
+                    isActive={currentPage === page}
+                  >
+                    {page}
+                  </PaginationLink>
+                )}
+              </PaginationItem>
+            ))}
+
+            <PaginationItem>
+              <PaginationNext
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
     </div>
   );
 }
