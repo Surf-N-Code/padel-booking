@@ -14,8 +14,8 @@ content-type: application/json
 {
     "dateTime": "2024-12-29T19:00:00.000Z",
     "venue": {
-        "id": "padel-",
-        "label": "Padel",
+        "id": "padel-arena-düsseldorf",
+        "label": "Padel Arena Düsseldorf",
         "address": "Franz-Rennefeld-Weg 22 40472 Düsseldorf",
         "link": "https://tc-kartause.de/padel-arena/"
     },

@@ -1,22 +1,24 @@
-import Redis from 'ioredis'
+import Redis from 'ioredis';
 
 const getRedisClient = () => {
   const client = new Redis(process.env.REDIS_HOST!, {
     tls: {
-      rejectUnauthorized: false
+      rejectUnauthorized: false,
     },
     retryStrategy: (times) => {
-      const delay = Math.min(times * 50, 2000)
-      return delay
+      const delay = Math.min(times * 50, 2000);
+      return delay;
     },
-    maxRetriesPerRequest: 3
-  })
+    maxRetriesPerRequest: 3,
+  });
 
-  client.on('error', (err) => {
-    console.error('Redis Client Error:', err)
-  })
+  client.on('error', (err: any) => {
+    if (err?.code !== 'ETIMEDOUT') {
+      console.error('Redis Client Error:', err);
+    }
+  });´
 
-  return client
-}
+  return client;
+};
 
-export const redis = getRedisClient()
+export const redis = getRedisClient();
