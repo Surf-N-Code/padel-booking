@@ -64,71 +64,55 @@ export function GamesList({ gameId }: GamesListProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const gamesPerPage = 8;
 
-  // Fetch user profile when component mounts
+  // Fetch user profile to get favorite venues
   const { data: userProfile } = useQuery({
     queryKey: ['userProfile'],
     queryFn: async () => {
       if (!session?.user) return null;
-      const res = await fetch('/api/user/profile');
-      if (!res.ok) throw new Error('Failed to fetch user profile');
-      return res.json();
+      const response = await fetch('/api/user/profile');
+      if (!response.ok) throw new Error('Failed to fetch profile');
+      return response.json();
     },
     enabled: !!session?.user,
   });
 
-  // Pre-populate name field when joining a new game
-  const getDefaultPlayerName = (gameId: string) => {
-    return playerNames[gameId] !== undefined
-      ? playerNames[gameId]
-      : userProfile?.name || '';
-  };
-
-  // Initialize playerNames with profile name when profile is loaded
-  useEffect(() => {
-    if (userProfile?.name && Object.keys(playerNames).length === 0) {
-      setPlayerNames({});
-    }
-  }, [userProfile]);
-
-  const {
-    data: games = [],
-    isLoading,
-    error,
-  } = useQuery<Game[]>({
+  // Get games with favorite venues filter
+  const { data: games = [], isLoading } = useQuery({
     queryKey: ['games', gameId],
     queryFn: async () => {
-      const url = gameId ? `/api/games?id=${gameId}` : '/api/games';
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('Failed to fetch games');
-      const data = await res.json();
+      const response = await fetch(
+        gameId ? `/api/games?id=${gameId}` : '/api/games'
+      );
+      if (!response.ok) throw new Error('Failed to fetch games');
+      const data = await response.json();
       return Array.isArray(data) ? data : [data];
     },
   });
 
-  // Get unique venues from games
-  const uniqueVenues = Array.from(
-    new Map(games.map((game) => [game.venue.id, game.venue])).values()
-  ).sort((a: Venue, b: Venue) => a.label.localeCompare(b.label));
+  // Get unique venues from games that are in user's favorites
+  const venues = useMemo(() => {
+    if (!userProfile?.favoriteVenues) return null;
 
-  // Sort venues with favorites at top
-  const sortedVenues = useMemo(() => {
-    if (!uniqueVenues || !userProfile?.favoriteVenues) return uniqueVenues;
+    const gameVenues = games.map((game) => game.venue);
+    const uniqueVenues = [
+      ...new Map(gameVenues.map((v) => [v.id, v])).values(),
+    ];
+    return uniqueVenues.filter((venue) =>
+      userProfile.favoriteVenues.includes(venue.id)
+    );
+  }, [games, userProfile?.favoriteVenues]);
 
-    return [...uniqueVenues].sort((a, b) => {
-      const aIsFavorite = userProfile.favoriteVenues.includes(a.id);
-      const bIsFavorite = userProfile.favoriteVenues.includes(b.id);
-      if (aIsFavorite && !bIsFavorite) return -1;
-      if (!aIsFavorite && bIsFavorite) return 1;
-      return a.label.localeCompare(b.label);
+  // Filter games based on availability, selected venue, and favorite venues
+  const filteredGames = useMemo(() => {
+    return games.filter((game) => {
+      const availabilityMatch = !showAvailableOnly || game.players.length < 4;
+      const venueMatch = !selectedVenue || game.venue.label === selectedVenue;
+      const isFavoriteVenue = userProfile?.favoriteVenues?.includes(
+        game.venue.id
+      );
+      return availabilityMatch && venueMatch && isFavoriteVenue;
     });
-  }, [uniqueVenues, userProfile?.favoriteVenues]);
-
-  // Filter games based on availability and selected venue
-  const filteredGames = games.filter((game) => {
-    const availabilityMatch = !showAvailableOnly || game.players.length < 4;
-    const venueMatch = !selectedVenue || game.venue.label === selectedVenue;
-    return availabilityMatch && venueMatch;
-  });
+  }, [games, showAvailableOnly, selectedVenue, userProfile?.favoriteVenues]);
 
   // Calculate pagination
   const totalGames = filteredGames.length;
@@ -306,6 +290,13 @@ export function GamesList({ gameId }: GamesListProps) {
     },
   });
 
+  // Pre-populate name field when joining a new game
+  const getDefaultPlayerName = (gameId: string) => {
+    return playerNames[gameId] !== undefined
+      ? playerNames[gameId]
+      : userProfile?.name || '';
+  };
+
   const handleSavePlayers = async (gameId: string) => {
     try {
       await joinGame.mutate({
@@ -357,22 +348,24 @@ export function GamesList({ gameId }: GamesListProps) {
           <Skeleton className="h-8 w-[250px]" />
           <Skeleton className="h-8 w-[200px]" />
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Skeleton className="mt-6 h-[320px] w-[330px] rounded-xl" />
-          <Skeleton className="mt-6 h-[320px] w-[330px] rounded-xl" />
-          <Skeleton className="mt-6 h-[320px] w-[330px] rounded-xl" />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Skeleton className="mt-6 h-[250px] w-full md:w-[376px] lg:w-[238px] rounded-xl" />
+          <Skeleton className="mt-6 h-[250px] w-full md:w-[376px] lg:w-[238px] rounded-xl" />
+          <Skeleton className="mt-6 h-[250px] w-full md:w-[376px] lg:w-[238px] rounded-xl" />
+          <Skeleton className="mt-6 h-[250px] w-full md:w-[376px] lg:w-[238px] rounded-xl" />
         </div>
       </div>
     );
   }
 
-  if (error) return <div>Error loading games: {error.message}</div>;
   if (!games?.length) return <div>No games scheduled yet.</div>;
+  if (!filteredGames.length)
+    return <div>No games found in your favorite venues.</div>;
 
   return (
     <div className="space-y-6">
       {!gameId && (
-        <div className="flex flex-col md:flex-row  md:justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:justify-between gap-4">
           <div className="flex items-center gap-2">
             <Switch
               id="show-available"
@@ -382,66 +375,65 @@ export function GamesList({ gameId }: GamesListProps) {
             <Label htmlFor="show-available">Show available only</Label>
           </div>
 
-          <div className="flex-1">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  className="justify-between w-[250px]"
-                >
-                  {selectedVenue || 'Filter by venue'}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[300px] p-0">
-                <Command>
-                  <CommandInput placeholder="Search venue..." />
-                  <CommandList>
-                    <CommandEmpty>No venue found.</CommandEmpty>
-                    <CommandGroup>
-                      <CommandItem
-                        onSelect={() => {
-                          setSelectedVenue('');
-                          setCurrentPage(1);
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            'mr-2 h-4 w-4',
-                            !selectedVenue ? 'opacity-100' : 'opacity-0'
-                          )}
-                        />
-                        All venues
-                      </CommandItem>
-                      {sortedVenues.map((venue) => (
+          {venues && venues.length > 0 && (
+            <div className="flex">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    className="justify-between w-[250px]"
+                  >
+                    {selectedVenue || 'Filter by venue'}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] p-0">
+                  <Command>
+                    <CommandInput placeholder="Search venue..." />
+                    <CommandList>
+                      <CommandEmpty>No venue found.</CommandEmpty>
+                      <CommandGroup>
                         <CommandItem
-                          key={venue.id}
                           onSelect={() => {
-                            setSelectedVenue(venue.label);
+                            setSelectedVenue('');
                             setCurrentPage(1);
                           }}
                         >
                           <Check
                             className={cn(
                               'mr-2 h-4 w-4',
-                              selectedVenue === venue.label
-                                ? 'opacity-100'
-                                : 'opacity-0'
+                              !selectedVenue ? 'opacity-100' : 'opacity-0'
                             )}
                           />
-                          {userProfile?.favoriteVenues?.includes(venue.id) && (
-                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                          )}
-                          <span className="truncate">{venue.label}</span>
+                          All favorite venues
                         </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-          </div>
+                        {venues.map((venue) => (
+                          <CommandItem
+                            key={venue.id}
+                            onSelect={() => {
+                              setSelectedVenue(venue.label);
+                              setCurrentPage(1);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                'mr-2 h-4 w-4',
+                                selectedVenue === venue.label
+                                  ? 'opacity-100'
+                                  : 'opacity-0'
+                              )}
+                            />
+                            {venue.label}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
         </div>
       )}
 
