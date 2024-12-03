@@ -32,7 +32,8 @@ export async function POST(req: Request) {
 
   if (messageText.startsWith(TELEGRAM_SLASH_COMMANDS.start)) {
     let msg = `Hi, there. This Telegram bot is used to find and join padel games in your favourite venues.
-    
+
+    If you have registered for padel.baby already, please link your account by providing your email address.
     - It will also notify you when a new game is created in your favourite venues.
     - It will also notify you when a player joins one of your created game(s).
     - You can register for a game by sending the /register command or by using the blue menu button below this message.

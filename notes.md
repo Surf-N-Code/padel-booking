@@ -2,9 +2,12 @@
 
 ## Register
 
-### Register via Frontend
+### Register via Frontend without Telegram id
 
-- how to get the telegram user id?
+- add a toggle in profile to add telegram notifications
+- if toggle is switched on, show link to telegram chat
+- ideally send /start automatically
+- normal start flow wills start from here
 
 ### Telegram Registration flow
 

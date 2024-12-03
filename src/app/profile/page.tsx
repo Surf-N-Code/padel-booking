@@ -52,6 +52,14 @@ import {
   BreadcrumbPage,
 } from '@/components/ui/breadcrumb';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Steps, Step } from '@/components/ui/steps';
 
 const profileFormSchema = z
   .object({
@@ -105,6 +113,7 @@ export default function ProfilePage() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [venuesOpen, setVenuesOpen] = useState(false);
   const [hoursOpen, setHoursOpen] = useState(false);
+  const [showTelegramDialog, setShowTelegramDialog] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch user profile
@@ -468,7 +477,12 @@ export default function ProfilePage() {
                   <FormControl>
                     <Checkbox
                       checked={field.value}
-                      onCheckedChange={field.onChange}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
+                        if (checked) {
+                          setShowTelegramDialog(true);
+                        }
+                      }}
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
@@ -481,6 +495,62 @@ export default function ProfilePage() {
                 </FormItem>
               )}
             />
+
+            <AlertDialog
+              open={showTelegramDialog}
+              onOpenChange={setShowTelegramDialog}
+            >
+              <AlertDialogContent className="sm:max-w-[500px]">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    Setup Telegram Notifications
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Follow these steps to enable Telegram notifications
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="py-6">
+                  <Steps>
+                    <Step>
+                      <Step.Header>
+                        <Step.Title>Open Telegram Bot</Step.Title>
+                        <Step.Description>
+                          Click the button below to open our Telegram bot
+                        </Step.Description>
+                      </Step.Header>
+                      <Step.Content>
+                        <Button
+                          className="mt-2"
+                          onClick={() =>
+                            window.open('https://t.me/padel_baby_bot', '_blank')
+                          }
+                        >
+                          Open Telegram Bot
+                        </Button>
+                      </Step.Content>
+                    </Step>
+                    <Step>
+                      <Step.Header>
+                        <Step.Title>Start the Bot</Step.Title>
+                        <Step.Description>
+                          Click the Start button or send /start to begin
+                        </Step.Description>
+                      </Step.Header>
+                      <Step.Content>
+                        <div className="mt-2 rounded-lg border">
+                          <img
+                            src="/telegram-start.png"
+                            alt="Telegram Start Button"
+                            className="rounded-lg"
+                            width={400}
+                          />
+                        </div>
+                      </Step.Content>
+                    </Step>
+                  </Steps>
+                </div>
+              </AlertDialogContent>
+            </AlertDialog>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
