@@ -4,6 +4,7 @@ export interface User {
   password: string;
   createdAt: string;
   name?: string;
+  lastName?: string;
   padelLevel?: string;
   favoriteVenues?: string[];
   telegramId?: string;
@@ -20,6 +21,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   name?: string;
+  lastName?: string;
   telegramId?: string;
 }
 

@@ -54,6 +54,7 @@ import {
 const profileFormSchema = z
   .object({
     name: z.string().min(2, 'Name must be at least 2 characters'),
+    lastName: z.string().min(2, 'Last name must be at least 2 characters'),
     email: z.string().email(),
     currentPassword: z.string().optional(),
     newPassword: z.string().optional(),
@@ -116,6 +117,7 @@ export default function ProfilePage() {
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       name: '',
+      lastName: '',
       email: session?.user?.email || '',
       padelLevel: 'mixed',
       favoriteVenues: [],
@@ -127,6 +129,7 @@ export default function ProfilePage() {
     if (userProfile && !isInitialized) {
       form.reset({
         name: userProfile.name || '',
+        lastName: userProfile.lastName || '',
         email: userProfile.email || '',
         padelLevel: userProfile.padelLevel || 'mixed',
         favoriteVenues: userProfile.favoriteVenues || [],
@@ -216,20 +219,36 @@ export default function ProfilePage() {
         <h1 className="text-3xl font-bold">Profile Settings</h1>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Your name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="John" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Doe" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}
