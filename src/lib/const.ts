@@ -12,4 +12,5 @@ export const LEVEL_BADGES: Record<
 export const TELEGRAM_SLASH_COMMANDS = {
   register: '/register',
   listGames: '/listgames',
+  start: '/start',
 };

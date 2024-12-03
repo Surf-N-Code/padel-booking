@@ -1,5 +1,7 @@
 import { Game, Player } from '@/types/game';
 import { format } from 'date-fns';
+import { redis } from './redis';
+import { User } from '@/types/auth';
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
@@ -31,7 +33,6 @@ export async function sendTelegramMessage(
       },
     }),
   });
-  console.log('Reply markup:', replyMarkup);
   try {
     const response = await fetch(
       `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
@@ -119,4 +120,84 @@ ${player.name} joined the game on ${date} at ${time}
 
 Current players:
 ${game.players?.map((p) => `• ${p.name}`).join('\n')}`;
+}
+
+export async function getUpcomingGamesForTelegramUser(telegramUserId: string) {
+  // Get user by Telegram ID
+  const userId = await redis.get(`telegram:${telegramUserId}`);
+  if (!userId) {
+    return {
+      success: false,
+      error: 'not_registered',
+      message: `Please [register](${process.env.APP_URL}/register?telegramUserId=${telegramUserId}) to see upcoming games`,
+    };
+  }
+
+  // Get user email from userId
+  const userEmail = await redis.get(`userid:${userId}`);
+  if (!userEmail) {
+    return {
+      success: false,
+      error: 'user_not_found',
+      message: 'User email not found',
+    };
+  }
+
+  // Get user profile
+  const userJson = await redis.get(`user:${userEmail}`);
+  if (!userJson) {
+    return {
+      success: false,
+      error: 'profile_not_found',
+      message: 'User profile not found',
+    };
+  }
+
+  const user = JSON.parse(userJson) as User;
+  const favoriteVenues = user.favoriteVenues || [];
+
+  if (favoriteVenues.length === 0) {
+    return {
+      success: false,
+      error: 'no_favorites',
+      message:
+        'You have no favorite venues. Please visit your [profile settings](${process.env.APP_URL}/profile) to select your favorite padel locations.',
+    };
+  }
+
+  // Get current timestamp
+  const now = Date.now();
+
+  // Get upcoming games from sorted set
+  const gameIds = await redis.zrangebyscore('games:by:date', now, '+inf');
+
+  // Get game details and players
+  const games = await Promise.all(
+    gameIds.map(async (id) => {
+      const gameData = await redis.hgetall(`game:${id}`);
+      const players = await redis.smembers(`game:${id}:players`);
+      return {
+        ...gameData,
+        id,
+        venue: JSON.parse(gameData.venue),
+        players: players.map((p) => JSON.parse(p)),
+      } as Game;
+    })
+  );
+
+  // Filter games based on criteria
+  const relevantGames = games.filter((game) => {
+    const isCreator = game.creatorEmail === userEmail;
+    const isPlayer = game.players.some((p) => p.userId === userId);
+    const hasOpenSlots = game.players.length < 4;
+    const isVenueFavorite = favoriteVenues?.includes(game.venue.id);
+    return (isCreator || isPlayer || isVenueFavorite) && hasOpenSlots;
+  });
+
+  return {
+    success: true,
+    games: relevantGames,
+    gamesFound: relevantGames.length,
+    message: `Found ${relevantGames.length} upcoming games for your favorite venues.`,
+  };
 }

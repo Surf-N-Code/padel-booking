@@ -1,13 +1,9 @@
-import { redis } from '@/lib/redis';
 import { NextResponse } from 'next/server';
-import { headers } from 'next/headers';
 import {
-  formatGameForTelegram,
   formatUpcomingGameForTelegram,
+  getUpcomingGamesForTelegramUser,
   sendTelegramMessage,
 } from '@/lib/telegram';
-import { Game } from '@/types/game';
-import { User } from '@/types/auth';
 
 export async function GET(request: Request) {
   try {
@@ -21,105 +17,39 @@ export async function GET(request: Request) {
       );
     }
 
-    // Get user by Telegram ID
-    const userId = await redis.get(`telegram:${telegramUserId}`);
-    if (!userId) {
-      await sendTelegramMessage(
-        telegramUserId,
-        `Please [register](${process.env.APP_URL}/register?telegramUserId=${telegramUserId}) to see upcoming games`,
-        'Markdown'
-      );
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    const result = await getUpcomingGamesForTelegramUser(telegramUserId);
+
+    if (!result.success) {
+      await sendTelegramMessage(telegramUserId, result.message, 'Markdown');
+      return NextResponse.json({ error: result.error }, { status: 404 });
     }
 
-    // Get user email from userId
-    const userEmail = await redis.get(`userid:${userId}`);
-    if (!userEmail) {
-      console.log('user with id: ', userId, 'not found');
-      return NextResponse.json(
-        { error: 'User email not found' },
-        { status: 404 }
-      );
-    }
-
-    // Get user profile
-    const userJson = await redis.get(`user:${userEmail}`);
-    if (!userJson) {
-      console.log('user with email: ', userEmail, 'not found');
-      return NextResponse.json(
-        { error: 'User profile not found' },
-        { status: 404 }
-      );
-    }
-
-    const user = JSON.parse(userJson) as User;
-    const favoriteVenues = user.favoriteVenues || [];
-
-    if (favoriteVenues.length === 0) {
-      await sendTelegramMessage(
-        telegramUserId,
-        'You have no favorite venues. Please visit your [profile settings](${process.env.APP_URL}/profile) to select your favorite padel locations.',
-        'Markdown'
-      );
-    }
-
-    // Get current timestamp
-    const now = Date.now();
-
-    // Get upcoming games from sorted set
-    const gameIds = await redis.zrangebyscore('games:by:date', now, '+inf');
-
-    // Get game details and players
-    const games = await Promise.all(
-      gameIds.map(async (id) => {
-        const gameData = await redis.hgetall(`game:${id}`);
-        const players = await redis.smembers(`game:${id}:players`);
-        return {
-          ...gameData,
-          id,
-          venue: JSON.parse(gameData.venue),
-          players: players.map((p) => JSON.parse(p)),
-        } as Game;
-      })
-    );
-
-    // Filter games based on criteria:
-    // 1. Game is in the future (already filtered by zrangebyscore)
-    // 2. User created the game OR is a player in the game
-    const relevantGames = games.filter((game) => {
-      const isCreator = game.creatorEmail === userEmail;
-      const isPlayer = game.players.some((p) => p.userId === userId);
-      const hasOpenSlots = game.players.length < 4;
-      const isVenueFavorite = favoriteVenues?.includes(game.venue.id);
-      return (isCreator || isPlayer || isVenueFavorite) && hasOpenSlots;
-    });
-
-    // Format message for Telegram
-    if (relevantGames.length > 0) {
-      const message = `
-🎾 <b>Your Upcoming Games</b>
-
-${relevantGames
-  .map((game) => formatUpcomingGameForTelegram(game as Game))
-  .join('\n\n')}
-`;
-
-      await sendTelegramMessage(message, 'HTML');
-      return NextResponse.json({
-        success: true,
-        gamesFound: relevantGames.length,
-      });
-    } else {
+    if (result.gamesFound === 0) {
       await sendTelegramMessage(
         telegramUserId,
         'No upcoming games found for your favorite venues. Visit our website to join or create a game or subscribe to more venues!',
         'HTML'
       );
+      return NextResponse.json({
+        message: 'No upcoming games found',
+        gamesFound: 0,
+      });
     }
 
+    if (!result.games) {
+      return NextResponse.json({ error: result.message }, { status: 500 });
+    }
+    // Format message for Telegram
+    const message = `
+🎾 <b>Your Upcoming Games</b>
+
+${result.games.map((game) => formatUpcomingGameForTelegram(game)).join('\n\n')}
+`;
+
+    await sendTelegramMessage(telegramUserId, message, 'HTML');
     return NextResponse.json({
-      message: 'No upcoming games found',
-      gamesFound: 0,
+      success: true,
+      gamesFound: result.gamesFound,
     });
   } catch (error) {
     console.error('Failed to list upcoming games:', error);
