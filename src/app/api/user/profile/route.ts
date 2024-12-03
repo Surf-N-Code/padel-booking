@@ -51,7 +51,7 @@ export async function PUT(req: Request) {
 
     console.log('body: ', body);
 
-    console.log('notificationsEnabled: ', notificationsEnabled);
+    console.log('notificationHours: ', notificationHours);
 
     // Get current user
     const userJson = await redis.get(`user:${session.user.email}`);

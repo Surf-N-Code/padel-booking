@@ -438,11 +438,6 @@ export default function ProfilePage() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Notification Hours*</FormLabel>
-                  <span className="text-xs text-muted-foreground ml-2">
-                    Select the hours of the day you are available for playing
-                    padel. You will receive notifications for new games at your
-                    favorite venues during these hours.
-                  </span>
                   <Popover open={hoursOpen} onOpenChange={setHoursOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
