@@ -2,7 +2,6 @@ import { Game, Player } from '@/types/game';
 import { format } from 'date-fns';
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
 export async function sendTelegramMessage(
   chatId: string,
@@ -10,7 +9,7 @@ export async function sendTelegramMessage(
   parseMode: 'HTML' | 'Markdown' = 'HTML',
   replyMarkup?: { text: string; url: string }
 ) {
-  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+  if (!TELEGRAM_BOT_TOKEN) {
     console.warn('Telegram credentials not configured');
     return;
   }
