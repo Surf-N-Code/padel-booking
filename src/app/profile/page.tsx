@@ -91,7 +91,7 @@ const profileFormSchema = z
 const HOURS = Array.from({ length: 17 }, (_, i) => {
   const hour = i + 7;
   return {
-    value: hour.toString(),
+    value: hour.toString().padStart(2, '0'),
     label: hour.toString().padStart(2, '0') + ':00',
   };
 });

@@ -72,7 +72,17 @@ export async function POST(request: Request) {
         if (!user.telegramId || !user.favoriteVenues) return;
 
         const hasVenueInFavorites = user.favoriteVenues.includes(data.venue.id);
-        if (!hasVenueInFavorites) return;
+        const isInNotificationHours = user?.notificationHours?.includes(
+          data.dateTime.slice(11, 13)
+        );
+        console.log(
+          'isInNotificationHours: ',
+          isInNotificationHours,
+          data.dateTime.slice(11, 13),
+          'hasVenueInFavorites: ',
+          hasVenueInFavorites
+        );
+        if (!hasVenueInFavorites || !isInNotificationHours) return;
 
         const gameWithParsedVenue = {
           ...game,
