@@ -75,14 +75,23 @@ export async function POST(request: Request) {
         const isInNotificationHours = user?.notificationHours?.includes(
           data.dateTime.slice(11, 13)
         );
+        const hasNotificationsEnabled = user.notificationsEnabled;
+
         console.log(
           'isInNotificationHours: ',
           isInNotificationHours,
           data.dateTime.slice(11, 13),
           'hasVenueInFavorites: ',
-          hasVenueInFavorites
+          hasVenueInFavorites,
+          'hasNotificationsEnabled: ',
+          hasNotificationsEnabled
         );
-        if (!hasVenueInFavorites || !isInNotificationHours) return;
+        if (
+          !hasVenueInFavorites ||
+          !isInNotificationHours ||
+          !hasNotificationsEnabled
+        )
+          return;
 
         const gameWithParsedVenue = {
           ...game,

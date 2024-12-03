@@ -10,6 +10,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -50,6 +51,7 @@ import {
   BreadcrumbSeparator,
   BreadcrumbPage,
 } from '@/components/ui/breadcrumb';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const profileFormSchema = z
   .object({
@@ -63,6 +65,7 @@ const profileFormSchema = z
       .array(z.string())
       .nonempty('At least one favorite venue is required'),
     notificationHours: z.array(z.string()).min(1, 'Select at least one hour'),
+    notificationsEnabled: z.boolean(),
   })
   .refine(
     (data) => {
@@ -135,12 +138,14 @@ export default function ProfilePage() {
       padelLevel: 'mixed',
       favoriteVenues: [],
       notificationHours: [],
+      notificationsEnabled: true,
     },
   });
 
   // Update form values when user profile is loaded
   useEffect(() => {
     if (userProfile && !isInitialized) {
+      console.log('userProfile in form: ', userProfile);
       form.reset({
         name: userProfile.name || '',
         lastName: userProfile.lastName || '',
@@ -150,12 +155,14 @@ export default function ProfilePage() {
         notificationHours: userProfile.notificationHours || [],
         currentPassword: '',
         newPassword: '',
+        notificationsEnabled: userProfile.notificationsEnabled,
       });
       setIsInitialized(true);
     }
   }, [userProfile, form, isInitialized]);
 
   async function onSubmit(values: z.infer<typeof profileFormSchema>) {
+    console.log('-------------', values);
     try {
       setIsLoading(true);
       const response = await fetch('/api/user/profile', {
@@ -183,6 +190,7 @@ export default function ProfilePage() {
         notificationHours: values.notificationHours, // Explicitly set notificationHours
         currentPassword: '',
         newPassword: '',
+        notificationsEnabled: values.notificationsEnabled,
       });
     } catch (error) {
       console.error('Profile update error:', error);
@@ -437,6 +445,7 @@ export default function ProfilePage() {
                           role="combobox"
                           aria-expanded={hoursOpen}
                           className="w-full justify-between"
+                          disabled={!form.watch('notificationsEnabled')}
                         >
                           {field.value?.length > 0
                             ? `Selected ${field.value.length} hours`
@@ -445,7 +454,7 @@ export default function ProfilePage() {
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-full p-0">
+                    <PopoverContent className="w-[200px] p-0">
                       <Command>
                         <CommandInput placeholder="Search hour..." />
                         <CommandList>
@@ -487,8 +496,30 @@ export default function ProfilePage() {
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="notificationsEnabled"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Enable Notifications</FormLabel>
+                    <FormDescription>
+                      Receive Telegram notifications for new games at your
+                      favorite venues during selected hours.
+                    </FormDescription>
+                  </div>
+                </FormItem>
+              )}
+            />
+
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Updating...' : 'Update Profile'}
+              {isLoading ? 'Saving...' : 'Save changes'}
             </Button>
           </form>
         </Form>

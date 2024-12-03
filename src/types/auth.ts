@@ -9,6 +9,7 @@ export interface User {
   favoriteVenues?: string[];
   telegramId?: string;
   notificationHours?: string[];
+  notificationsEnabled: boolean;
 }
 
 export interface Session {

@@ -46,7 +46,12 @@ export async function PUT(req: Request) {
       padelLevel,
       notificationHours,
       favoriteVenues,
+      notificationsEnabled,
     } = body;
+
+    console.log('body: ', body);
+
+    console.log('notificationsEnabled: ', notificationsEnabled);
 
     // Get current user
     const userJson = await redis.get(`user:${session.user.email}`);
@@ -74,12 +79,14 @@ export async function PUT(req: Request) {
     // Update user fields
     const updatedUser: User = {
       ...user,
-      name: name || user.name,
-      lastName: lastName || user.lastName,
-      padelLevel: padelLevel || user.padelLevel,
-      favoriteVenues: favoriteVenues || user.favoriteVenues,
-      notificationHours: notificationHours || user.notificationHours,
+      name: name,
+      lastName: lastName,
+      padelLevel: padelLevel,
+      favoriteVenues: favoriteVenues,
+      notificationHours: notificationHours,
+      notificationsEnabled: notificationsEnabled,
     };
+    console.log('updatedUser: ', updatedUser);
 
     // If email is changing, need to update Redis keys
     if (email && email !== session.user.email) {
