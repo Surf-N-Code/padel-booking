@@ -138,7 +138,7 @@ export function NewGameForm() {
           )}
         />
 
-        <div className="flex gap-4">
+        <div className="flex flex-col md:flex-row gap-4">
           <VenueCombobox
             form={form}
             venues={venues}

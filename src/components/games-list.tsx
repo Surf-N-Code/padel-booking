@@ -50,7 +50,7 @@ export function GamesList({ gameId }: GamesListProps) {
   const queryClient = useQueryClient();
   const [playerNames, setPlayerNames] = useState<Record<string, string>>({});
   const [loadingState, setLoadingState] = useState<LoadingState | null>(null);
-  const [showAvailableOnly, setShowAvailableOnly] = useState(false);
+  const [showAvailableOnly, setShowAvailableOnly] = useState(true);
   const [selectedVenue, setSelectedVenue] = useState<string>('');
   const [open, setOpen] = useState(false);
 
@@ -297,7 +297,7 @@ export function GamesList({ gameId }: GamesListProps) {
   if (isLoading)
     return (
       <div className="flex flex-col space-y-3">
-        <div className="flex justify-between">
+        <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 justify-between">
           <Skeleton className="h-8 w-[250px]" />
           <Skeleton className="h-8 w-[200px]" />
         </div>

@@ -19,8 +19,8 @@ export default async function Home({ searchParams }: Props) {
         </h1>
         <Link href="/games/new">
           <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            New Game
+            <PlusCircle className="h-4 w-4" />
+            <span className="ml-2 hidden md:block">New Game</span>
           </Button>
         </Link>
       </div>
