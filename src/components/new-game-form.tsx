@@ -212,7 +212,7 @@ export function NewGameForm() {
           />
         </div>
 
-        <div className="space-y-4">
+        {/* <div className="space-y-4">
           <FormLabel>Players</FormLabel>
           {[0, 1, 2, 3].map((index) => (
             <FormField
@@ -233,7 +233,7 @@ export function NewGameForm() {
               )}
             />
           ))}
-        </div>
+        </div> */}
 
         <Button
           type="submit"

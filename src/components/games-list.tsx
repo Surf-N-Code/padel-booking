@@ -97,7 +97,7 @@ export function GamesList({ gameId }: GamesListProps) {
 
   // Get unique venues from games
   const uniqueVenues = Array.from(
-    new Set(games.map((game) => game.venue))
+    new Map(games.map((game) => [game.venue.id, game.venue])).values()
   ).sort((a: Venue, b: Venue) => a.label.localeCompare(b.label));
 
   // Sort venues with favorites at top
@@ -297,7 +297,7 @@ export function GamesList({ gameId }: GamesListProps) {
   if (isLoading)
     return (
       <div className="flex flex-col space-y-3">
-        <div className="flex justify-between space-y-2">
+        <div className="flex justify-between">
           <Skeleton className="h-8 w-[250px]" />
           <Skeleton className="h-8 w-[200px]" />
         </div>
@@ -314,7 +314,7 @@ export function GamesList({ gameId }: GamesListProps) {
   return (
     <div className="space-y-6">
       {!gameId && (
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col md:flex-row  md:justify-between gap-4">
           <div className="flex items-center gap-2">
             <Switch
               id="show-available"
