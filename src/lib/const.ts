@@ -13,4 +13,5 @@ export const TELEGRAM_SLASH_COMMANDS = {
   register: '/register',
   listGames: '/listgames',
   start: '/start',
+  linkAccount: '/linkaccount',
 };

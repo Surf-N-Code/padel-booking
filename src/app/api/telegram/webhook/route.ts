@@ -7,6 +7,45 @@ import {
 } from '@/lib/telegram';
 import { NextResponse } from 'next/server';
 
+const isValidEmail = (email: string) => {
+  return String(email)
+    .toLowerCase()
+    .match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
+};
+
+const linkUserAccountToTelegram = async (
+  telegramUserId: string,
+  email: string
+) => {
+  console.log('Valid email address', email);
+  //get redis user by email
+  const user = await redis.get(`user:${email}`);
+  console.log('User', user);
+
+  if (!user) {
+    await sendTelegramMessage(
+      telegramUserId,
+      `No user found with this email address. Please visit the [website](${process.env.APP_URL}/register?telegramUserId=${telegramUserId}) to register.`,
+      'Markdown'
+    );
+    throw new Error('User not found with that email address');
+  }
+
+  const userObj = JSON.parse(user);
+  const updatedUser = {
+    ...userObj,
+    telegramId: telegramUserId,
+  };
+  //update user with telegramUserId
+  await redis.set(`user:${email}`, JSON.stringify(updatedUser));
+  await redis.set(`telegram:${telegramUserId}`, userObj.id);
+  await sendTelegramMessage(
+    telegramUserId,
+    `Your account has been linked to padel.baby. You will now receive notifications when a new game is created in your favourite venues or players join your game(s).`,
+    'HTML'
+  );
+};
+
 export async function POST(req: Request) {
   const body = await req.json();
   const telegramUserId = body.message.chat.id;
@@ -29,6 +68,27 @@ export async function POST(req: Request) {
     userId,
     messageText.startsWith(TELEGRAM_SLASH_COMMANDS.register)
   );
+
+  //check if messageText contains a valid email address and nothing else
+  if (isValidEmail(messageText)) {
+    const email = messageText;
+    try {
+      await linkUserAccountToTelegram(telegramUserId, email);
+    } catch (error) {
+      console.log('Error linking account. User notified', error);
+    }
+  }
+
+  if (messageText.startsWith(TELEGRAM_SLASH_COMMANDS.linkAccount)) {
+    //split message by space and get the last element
+    const email = messageText.split(' ').pop();
+    try {
+      await linkUserAccountToTelegram(telegramUserId, email);
+    } catch (error) {
+      console.log('Error linking account. User notified', error);
+    }
+    return NextResponse.json({ success: true });
+  }
 
   if (messageText.startsWith(TELEGRAM_SLASH_COMMANDS.start)) {
     let msg = `Hi, there. This Telegram bot is used to find and join padel games in your favourite venues.

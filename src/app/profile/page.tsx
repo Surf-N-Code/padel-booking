@@ -54,8 +54,11 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
+  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
@@ -72,8 +75,8 @@ const profileFormSchema = z
     favoriteVenues: z
       .array(z.string())
       .nonempty('At least one favorite venue is required'),
-    notificationHours: z.array(z.string()).min(1, 'Select at least one hour'),
-    notificationsEnabled: z.boolean(),
+    notificationHours: z.array(z.string()).optional(),
+    notificationsEnabled: z.boolean().optional(),
   })
   .refine(
     (data) => {
@@ -95,6 +98,19 @@ const profileFormSchema = z
       message:
         'Both current and new password (min 6 chars) are required to change password',
       path: ['newPassword'],
+    }
+  )
+  .refine(
+    (data) => {
+      // notificationHours should only be required when notificationsEnabled is true
+      if (data.notificationsEnabled) {
+        return data.notificationHours && data.notificationHours.length > 0;
+      }
+      return true;
+    },
+    {
+      message: 'Select at least one hour when notifications are enabled',
+      path: ['notificationHours'],
     }
   );
 
@@ -485,7 +501,16 @@ export default function ProfilePage() {
                       }}
                     />
                   </FormControl>
-                  <div className="space-y-1 leading-none">
+                  <div
+                    className="space-y-1 leading-none flex-1 cursor-pointer"
+                    onClick={() => {
+                      const newValue = !field.value;
+                      field.onChange(newValue);
+                      if (newValue) {
+                        setShowTelegramDialog(true);
+                      }
+                    }}
+                  >
                     <FormLabel>Enable Notifications</FormLabel>
                     <FormDescription>
                       Receive Telegram notifications for new games at your
@@ -506,49 +531,23 @@ export default function ProfilePage() {
                     Setup Telegram Notifications
                   </AlertDialogTitle>
                   <AlertDialogDescription>
-                    Follow these steps to enable Telegram notifications
+                    In order to receive Telegram notifications, you need to link
+                    your Telegram account.
                   </AlertDialogDescription>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() =>
+                        window.open(
+                          `https://t.me/PadelBabyBot?text=/linkaccount%20${session?.user?.email}`,
+                          '_blank'
+                        )
+                      }
+                    >
+                      Link Telegram Account
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
                 </AlertDialogHeader>
-                <div className="py-6">
-                  <Steps>
-                    <Step>
-                      <Step.Header>
-                        <Step.Title>Open Telegram Bot</Step.Title>
-                        <Step.Description>
-                          Click the button below to open our Telegram bot
-                        </Step.Description>
-                      </Step.Header>
-                      <Step.Content>
-                        <Button
-                          className="mt-2"
-                          onClick={() =>
-                            window.open('https://t.me/padel_baby_bot', '_blank')
-                          }
-                        >
-                          Open Telegram Bot
-                        </Button>
-                      </Step.Content>
-                    </Step>
-                    <Step>
-                      <Step.Header>
-                        <Step.Title>Start the Bot</Step.Title>
-                        <Step.Description>
-                          Click the Start button or send /start to begin
-                        </Step.Description>
-                      </Step.Header>
-                      <Step.Content>
-                        <div className="mt-2 rounded-lg border">
-                          <img
-                            src="/telegram-start.png"
-                            alt="Telegram Start Button"
-                            className="rounded-lg"
-                            width={400}
-                          />
-                        </div>
-                      </Step.Content>
-                    </Step>
-                  </Steps>
-                </div>
               </AlertDialogContent>
             </AlertDialog>
 
