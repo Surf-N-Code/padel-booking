@@ -4,7 +4,7 @@ import { lg } from '@/lib/utils';
 import { NextResponse } from 'next/server';
 
 const CACHE_KEY = 'padel:venues';
-const CACHE_EXPIRY = 60 * 60 * 24; // 24 hours in seconds
+const CACHE_EXPIRY = 60 * 60 * 24;
 
 export async function GET() {
   try {
@@ -18,22 +18,22 @@ export async function GET() {
       venues = [];
     }
 
-    if (!venues || venues.length === 0) {
-      lg('no cached data, scraping', 'red');
-      venues = await scrapeVenues();
-    }
+    // if (!venues || venues.length === 0) {
+    //   lg('no cached data, scraping', 'red');
+    //   venues = await scrapeVenues();
+    // }
 
-    venues = venues.map((venue) => ({
-      id: venue.name.toLowerCase().replace(/\s+/g, '-'),
-      label: venue.name,
-      address: venue.addressLines[0]
-        .split('<br />')
-        .map((line: string) => line.trim())
-        .join(' ')
-        .trim()
-        .replace(/^,/, ''),
-      link: venue.link,
-    }));
+    // venues = venues.map((venue) => ({
+    //   id: venue.name.toLowerCase().replace(/\s+/g, '-'),
+    //   label: venue.name,
+    //   address: venue.addressLines[0]
+    //     .split('<br />')
+    //     .map((line: string) => line.trim())
+    //     .join(' ')
+    //     .trim()
+    //     .replace(/^,/, ''),
+    //   link: venue.link,
+    // }));
 
     return NextResponse.json(venues);
   } catch (error) {

@@ -14,6 +14,9 @@ export function NavBar() {
   const navigation = [
     { name: 'Games', href: '/' },
     { name: 'New Game', href: '/games/new' },
+    ...(session?.user?.email === 'ndilthey@gmail.com'
+      ? [{ name: 'Admin', href: '/admin/venues' }]
+      : []),
   ];
 
   return (
