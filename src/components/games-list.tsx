@@ -267,6 +267,10 @@ export function GamesList({ gameId }: GamesListProps) {
   };
 
   const handleRemovePlayer = async (gameId: string, player: Player) => {
+    if (!session?.user) {
+      router.push('/login');
+      return;
+    }
     try {
       await leaveGame.mutate({ gameId, player });
     } catch (error) {
