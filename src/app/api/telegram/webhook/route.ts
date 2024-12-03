@@ -1,34 +1,42 @@
+import { TELEGRAM_SLASH_COMMANDS } from '@/lib/const';
+import { redis } from '@/lib/redis';
+import { sendTelegramMessage } from '@/lib/telegram';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { NextResponse } from 'next/server';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method === 'POST') {
-    const chatId = req.body.message.chat.id; // Get chat ID
-    const messageText = req.body.message.text; // Get the message text
+export async function POST(req: Request) {
+  const body = await req.json();
+  const telegramUserId = body.message.chat.id; // Get chat ID
+  const messageText = body.message.text; // Get the message text
 
-    // Process the message (e.g., log it, send a response, etc.)
-    console.log(`New message from ${chatId}: ${messageText}`);
+  // Process the message (e.g., log it, send a response, etc.)
+  console.log(`New message from ${telegramUserId}: ${messageText}`);
 
-    // Optionally, send a response back to the user
-    const token = process.env.TELEGRAM_BOT_TOKEN; // Your bot's API key
-    // const response = await fetch(
-    //   `https://api.telegram.org/bot${token}/sendMessage`,
-    //   {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify({
-    //       chat_id: chatId,
-    //       text: 'Hi! Your message was received.',
-    //     }),
-    //   }
-    // );
-
-    return res.status(200).json({ success: true });
-  } else {
-    return res.status(405).end(); // Method Not Allowed
+  if (!telegramUserId) {
+    return NextResponse.json(
+      { error: 'Telegram user ID is required' },
+      { status: 400 }
+    );
   }
+
+  // Check if the Telegram ID exists in Redis
+  const userId = await redis.get(`telegram:${telegramUserId}`);
+
+  if (!userId) {
+    await sendTelegramMessage(
+      telegramUserId,
+      `You are not registered for padel.baby. Please register [here](${process.env.APP_URL}/register?telegramUserId=${telegramUserId})`,
+      'Markdown'
+    );
+  }
+
+  if (messageText.startsWith(TELEGRAM_SLASH_COMMANDS.register)) {
+    // TODO: Register user
+  }
+
+  if (messageText.startsWith(TELEGRAM_SLASH_COMMANDS.listGames)) {
+    // TODO: List games
+  }
+
+  return NextResponse.json({ success: true });
 }

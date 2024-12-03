@@ -8,3 +8,8 @@ export const LEVEL_BADGES: Record<
   expert: { label: 'Expert (5.0+)', variant: 'default' },
   mixed: { label: 'Mixed Levels', variant: 'secondary' },
 };
+
+export const TELEGRAM_SLASH_COMMANDS = {
+  register: '/register',
+  listGames: '/listgames',
+};
