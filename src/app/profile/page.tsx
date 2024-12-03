@@ -59,7 +59,9 @@ const profileFormSchema = z
     currentPassword: z.string().optional(),
     newPassword: z.string().optional(),
     padelLevel: z.string(),
-    favoriteVenues: z.array(z.string()),
+    favoriteVenues: z
+      .array(z.string())
+      .nonempty('At least one favorite venue is required'),
   })
   .refine(
     (data) => {
