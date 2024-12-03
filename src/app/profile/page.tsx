@@ -436,7 +436,7 @@ export default function ProfilePage() {
                           className="w-full justify-between"
                           disabled={!form.watch('notificationsEnabled')}
                         >
-                          {field.value?.length > 0
+                          {field.value?.length && field.value.length > 0
                             ? `Selected ${field.value.length} hours`
                             : 'Select hours'}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />

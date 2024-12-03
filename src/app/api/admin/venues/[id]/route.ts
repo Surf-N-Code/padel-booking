@@ -4,17 +4,15 @@ import { NextResponse } from 'next/server';
 import { authOptions } from '@/lib/authOptions';
 import { Venue } from '@/types/game';
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: Request) {
   try {
+    const body = await request.json();
     const session = await getServerSession(authOptions);
     if (!session?.user?.email || session.user.email !== 'ndilthey@gmail.com') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { label } = await request.json();
+    const { label, venueId } = body;
     if (!label) {
       return NextResponse.json(
         { error: 'Venue name is required' },
@@ -28,7 +26,7 @@ export async function PUT(
 
     // Find and update the venue
     const updatedVenues = venues.map((venue: Venue) =>
-      venue.id === params.id ? { ...venue, label } : venue
+      venue.id === venueId ? { ...venue, label } : venue
     );
 
     // Save back to Redis

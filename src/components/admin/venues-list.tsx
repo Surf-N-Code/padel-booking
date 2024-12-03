@@ -31,12 +31,12 @@ export function VenuesList() {
     },
   });
 
-  const { mutate: updateVenue, isLoading: isUpdating } = useMutation({
+  const { mutate: updateVenue, isPending: isUpdating } = useMutation({
     mutationFn: async ({ id, label }: { id: string; label: string }) => {
       const response = await fetch(`/api/admin/venues/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ label }),
+        body: JSON.stringify({ label, venueId: id }),
       });
       if (!response.ok) throw new Error('Failed to update venue');
       return response.json();
