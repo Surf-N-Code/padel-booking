@@ -2,7 +2,7 @@
 
 import { signIn } from 'next-auth/react';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -14,8 +14,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
+import { Alert, AlertDescription } from './ui/alert';
+import { Info } from 'lucide-react';
 
 export function LoginForm() {
+  const searchParams = useSearchParams();
+  const registered = searchParams.get('registered');
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
@@ -39,7 +43,17 @@ export function LoginForm() {
   }
 
   return (
-    <div className="flex justify-center items-center mt-12">
+    <div className="flex justify-center items-center">
+      {registered && (
+        <Alert className="max-w-md mx-auto mb-4 mt-6" variant="success">
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            Registration successful! <p className="mb-6"></p>
+            After logging in, please visit your profile settings to select your
+            favorite padel locations!
+          </AlertDescription>
+        </Alert>
+      )}
       <Card className="w-[350px]">
         <CardHeader>
           <CardTitle>Login</CardTitle>

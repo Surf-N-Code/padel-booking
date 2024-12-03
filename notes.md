@@ -1,14 +1,20 @@
 # Features
 
-## Telegram
+## Register
 
-### Registration flow
+### Register via Frontend
+
+- how to get the telegram user id?
+
+### Telegram Registration flow
 
 - Api call from uchat with new registration from user
 - api endpoint checks if user with that telegram id already exists
 - if not, user is sent a link to register on the website with prefilled telegram id in a hidden field using url params
 - user needs to fill in username and password in the register form
 - if the url does not contain the telegram id, the user is sent to the normal register page
+
+## Telegram
 
 ### Game notifications
 

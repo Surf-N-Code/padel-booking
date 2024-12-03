@@ -47,6 +47,9 @@ export async function POST(req: Request) {
       password: hashedPassword,
       createdAt: new Date().toISOString(),
       name,
+      notificationsEnabled: false,
+      notificationHours: [],
+      lastName: body.lastName || '',
       telegramId,
     };
 
