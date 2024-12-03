@@ -16,7 +16,7 @@ const getRedisClient = () => {
     if (err?.code !== 'ETIMEDOUT') {
       console.error('Redis Client Error:', err);
     }
-  });´
+  });
 
   return client;
 };
