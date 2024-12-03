@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { format } from 'date-fns';
 import { Button } from './ui/button';
-import { UserPlus, UserMinus, MapPin, Star } from 'lucide-react';
+import { UserPlus, UserMinus, MapPin, Star, Loader2 } from 'lucide-react';
 import type { Game, Player, Venue } from '@/types/game';
 import { useState, useEffect, useMemo } from 'react';
 import { Switch } from './ui/switch';
@@ -70,7 +70,8 @@ export function GamesList({ gameId }: GamesListProps) {
   const getDefaultPlayerName = (gameId: string) => {
     return playerNames[gameId] !== undefined
       ? playerNames[gameId]
-      : userProfile?.name || '';
+      : `${userProfile?.name} ${userProfile?.lastName ? userProfile?.lastName.slice(0, 2) + '.' : ''}` ||
+          '';
   };
 
   // Initialize playerNames with profile name when profile is loaded
@@ -136,7 +137,7 @@ export function GamesList({ gameId }: GamesListProps) {
           gameId,
           player: {
             id: crypto.randomUUID(),
-            name: playerName || 'Anonymous Player',
+            name: playerName,
             userId: session?.user?.id || 'anonymous-user-id',
           },
         }),
@@ -187,6 +188,7 @@ export function GamesList({ gameId }: GamesListProps) {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['games'] });
+      console.log('Success', variables);
       setPlayerNames((prev) => ({
         ...prev,
         [variables.gameId]: '',
@@ -275,7 +277,7 @@ export function GamesList({ gameId }: GamesListProps) {
   };
 
   const handleAddPlayer = (gameId: string) => {
-    if (!session) {
+    if (!session?.user) {
       router.push('/login');
       return;
     }
@@ -437,34 +439,19 @@ export function GamesList({ gameId }: GamesListProps) {
                     {(!game.players || game.players.length < 4) && (
                       <li className="mt-2">
                         <div className="flex gap-2">
-                          <input
-                            type="text"
-                            placeholder="Your name"
-                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                            value={getDefaultPlayerName(game.id)}
-                            onChange={(e) =>
-                              setPlayerNames((prev) => ({
-                                ...prev,
-                                [game.id]: e.target.value,
-                              }))
-                            }
-                            onKeyDown={(e) => {
-                              if (
-                                e.key === 'Enter' &&
-                                getDefaultPlayerName(game.id)
-                              ) {
-                                e.preventDefault();
-                                handleAddPlayer(game.id);
-                              }
-                            }}
-                          />
                           <Button
                             variant="outline"
                             size="sm"
+                            className="w-full"
                             onClick={() => handleAddPlayer(game.id)}
                             disabled={isButtonLoading(game.id, 'join')}
                           >
-                            <UserPlus className="h-4 w-4" />
+                            {isButtonLoading(game.id, 'join') ? (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                              <UserPlus className="mr-2 h-4 w-4" />
+                            )}
+                            Join Game
                           </Button>
                         </div>
                       </li>
